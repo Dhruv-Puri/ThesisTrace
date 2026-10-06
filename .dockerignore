@@ -1,0 +1,15 @@
+# Keep images small and host state out of builds
+.git
+.gitignore
+.env                      # secrets never enter the image (passed at runtime instead)
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+documentation             # docs are not needed inside containers
+eval/results
+client/node_modules
+client/dist
+*.md
+!requirements.txt

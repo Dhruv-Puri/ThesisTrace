@@ -1,0 +1,37 @@
+# Paper2Reality — one command runs the whole system:
+#   docker compose up --build
+# web UI → http://localhost:8080   API → http://localhost:8000/api/health
+# Installs nothing on the host except Docker itself.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      HF_HOME: /models/hf
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}   # from .env; empty = fully local mode
+      LOW_RAM: ${LOW_RAM:-0}
+      SEMANTIC: ${SEMANTIC:-0}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - hf_cache:/models/hf      # HF weights: downloaded once, survives rebuilds
+      - api_data:/data/uploads   # uploaded PDFs + job results (never on host)
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  hf_cache:
+  api_data:
