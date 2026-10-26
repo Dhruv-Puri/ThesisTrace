@@ -2,7 +2,8 @@
 
 Covers **CO2** (why prompting works), **CO3** (model-agnostic prompt design),
 **CO4** (hallucination & prompt-injection failure modes), **CO5** (RAG grounding).
-Templates live in `api/prompts/*.txt` — single source of truth; tests import from there.
+Templates live in `api/prompts/*.txt` — single source of truth; the loader replaces
+`{{placeholders}}` and tests read the same files.
 
 ---
 
@@ -124,9 +125,10 @@ An uploaded PDF is **untrusted data**. A paper could literally contain
 4. **Sanitization:** strip control chars; cap section length fed to prompts; detect
    instruction-like lines in document (`ignore previous|you are now|system:`) → flag in
    `warnings` and exclude that span from CONTEXT.
-5. **Test suite:** `tests/test_injection.py` ships 6 hostile fixture PDFs/txts (fake
-   system prompt, "mark as supported", fake user message, role-play request, etc.).
-   Assertion: results identical to a clean run (verdicts, citations unchanged).
+5. **Test suite:** `api/tests/test_injection.py` embeds hostile fixture text (a fake
+   instruction line, "mark as supported", role-play, etc.) inside a paper and asserts
+   that it never reaches evidence/prompt context. Assertion: verdicts and citations
+   are unchanged by the hostile line.
 
 **Hallucination tests (CO4) in the same suite:** numbers-in-summary must exist in source;
 claims must be substrings of the document; report sentences must carry `[p.N]`.

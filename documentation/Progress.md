@@ -6,34 +6,39 @@
 
 **Status legend:** `⬜` not started · `🔶` in progress · `✅` done · `⛔` blocked
 
+> **Implementation pass (code):** the pipeline, job runner, API, React tabs, Docker
+> files and stdlib test suite are written. `✅` below means the code path exists and is
+> covered by the local fallback tests; `🔶` means it still needs the model-backed Docker
+> run on a real paper before Gate A/B/C is signed off.
+
 ---
 
 ## Phase A — NLP MVP (Week 1) → *demoable by Friday*
 
 | # | Task | Owner | Status | Blockers / notes |
 |---|------|-------|--------|------------------|
-| A1 | Project scaffold: git repo, `.venv`, `requirements.txt`, folder layout | P1 | ⬜ | venv ONLY — no global installs |
-| A2 | PDF text extraction (PyMuPDF): pages, sections, word counts, reading time | P1 | ⬜ | fallback: plain `.txt`/`.md` upload |
-| A3 | Tokenization study: HF tokenizer vs spaCy vs regex — BPE vs WordPiece vs SentencePiece (Practical 1) | P1 | ⬜ | save comparison table for report |
-| A4 | Sentence segmentation + reading stats (words, pages, sections, references count) | P1 | ⬜ | |
-| A5 | TF-IDF key terms + technical-term density + complexity score | P1 | ⬜ | sklearn `TfidfVectorizer` |
-| A6 | NER: HF small NER model + gazetteer for scientific terms (datasets, metrics, models) | P1 | ⬜ | see [NLP-Pipeline.md](NLP-Pipeline.md) |
-| A7 | Summarization: pretrained transformer → 3-bullet summary + ELI5 mode (Practical 4) | P1 | ⬜ | DistilBART / Flan-T5 |
-| A8 | `POST /api/analyze` returning `PaperAnalysis` JSON (stats + summary + entities) | P2 | ⬜ | contract in [Architecture.md](Architecture.md) |
-| A9 | React shell: upload page + Paper Overview tab + Key Concepts tab | P3 | ⬜ | mock data until A8 lands |
+| A1 | Project scaffold: git repo, `.venv`, `requirements.txt`, folder layout | P1 | ✅ | Docker-first; no host venv required, project-local `.data/` for state |
+| A2 | PDF text extraction (PyMuPDF): pages, sections, word counts, reading time | P1 | 🔶 | code done; PDF path needs Docker/PyMuPDF verification |
+| A3 | Tokenization study: HF tokenizer vs spaCy vs regex — BPE vs WordPiece vs SentencePiece (Practical 1) | P1 | 🔶 | baseline verified; HF tokenizers need Docker cache |
+| A4 | Sentence segmentation + reading stats (words, pages, sections, references count) | P1 | ✅ | |
+| A5 | TF-IDF key terms + technical-term density + complexity score | P1 | ✅ | sklearn + pure-Python fallback |
+| A6 | NER: HF small NER model + gazetteer for scientific terms (datasets, metrics, models) | P1 | 🔶 | gazetteer verified; HF model needs Docker |
+| A7 | Summarization: pretrained transformer → 3-bullet summary + ELI5 mode (Practical 4) | P1 | 🔶 | extractive fallback verified; model path needs Docker |
+| A8 | `POST /api/jobs` + `GET /api/jobs/{id}` returning `PaperAnalysis` JSON | P2 | ✅ | contract in [Architecture.md](Architecture.md) |
+| A9 | React shell: upload page + Paper Overview tab + Key Concepts tab | P3 | ✅ | plus demo mode; `npm run build` still to verify |
 | A10 | **GATE A demo:** upload PDF → stats + bullets + entities on screen | all | ⬜ | Fri Week 1 |
 
 ## Phase B — Evidence layer (Week 2) → *ClaimCheck works end-to-end*
 
 | # | Task | Owner | Status | Blockers / notes |
 |---|------|-------|--------|------------------|
-| B1 | Claim extraction: few-shot prompted extraction of major claims (Practical 3) | P1 | ⬜ | structured JSON output |
-| B2 | Sentence-level retrieval: TF-IDF + cosine similarity, top-k evidence candidates | P1 | ⬜ | recall@k measured (see [Evaluation.md](Evaluation.md)) |
-| B3 | NLI verdict per claim: support / partially supported / insufficient (DistilBERT MNLI) | P1 | ⬜ | threshold tuning |
-| B4 | Evidence cards: claim → passages → verdict → page citation | P2 | ⬜ | no citation, no verdict — hard rule |
+| B1 | Claim extraction: few-shot prompted extraction of major claims (Practical 3) | P1 | ✅ | prompt + heuristic fallback |
+| B2 | Sentence-level retrieval: TF-IDF + cosine similarity, top-k evidence candidates | P1 | ✅ | claim's own sentence excluded |
+| B3 | NLI verdict per claim: support / partially supported / insufficient (DistilBERT MNLI) | P1 | 🔶 | thresholds written; model path needs Docker |
+| B4 | Evidence cards: claim → passages → verdict → page citation | P2 | ✅ | no citation, no verdict — hard rule |
 | B5 | Zero-shot classification experiment: NLI model vs prompt-based labels (Practical 3) | P1 | ⬜ | |
 | B6 | Prompt-vs-model comparison: prompt-based summary/claims vs fine-tuned/small model (Practical 5) | P1 | ⬜ | record for report |
-| B7 | Frontend: ClaimCheck tab with 🟢/🟡/🔴 verdicts + evidence snippets | P3 | ⬜ | |
+| B7 | Frontend: ClaimCheck tab with 🟢/🟡/🔴 verdicts + evidence snippets | P3 | ✅ | |
 | B8 | Hand-label 50 evidence pairs as gold set (see [Evaluation.md](Evaluation.md)) | P3 | ⬜ | start early, label in batches |
 | B9 | **GATE B demo:** claim on screen → verdict + cited passage | all | ⬜ | Fri Week 2 |
 
@@ -41,13 +46,13 @@
 
 | # | Task | Owner | Status | Blockers / notes |
 |---|------|-------|--------|------------------|
-| C1 | Reproducibility checklist extraction (rule/keyword-based from methods sections) | P1 | ⬜ | scoring rubric in [NLP-Pipeline.md](NLP-Pipeline.md) |
-| C2 | TRL 1–9 rubric scorer: evidence-cited, deterministic first; optional Gemini wording | P1 | ⬜ | score must list its evidence |
-| C3 | Optional Gemini layer (free key): ELI5, TRL justification prose, report text | P2 | ⬜ | degrade gracefully with NO key |
-| C4 | Prompt hardening: document-as-untrusted-data, JSON-schema outputs (Practical 3) | P2 | ⬜ | see [Prompts-and-Grounding.md](Prompts-and-Grounding.md) |
-| C5 | Async job flow: upload → job id → poll → result (long analyses don't block) | P2 | ⬜ | |
-| C6 | Frontend: Reproducibility + TRL tabs, Executive Report view | P3 | ⬜ | |
-| C7 | Docker: `Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml` up on all machines | P2 | ⬜ | HF cache as named volume |
+| C1 | Reproducibility checklist extraction (rule/keyword-based from methods sections) | P1 | ✅ | 12 weighted signals |
+| C2 | TRL 1–9 rubric scorer: evidence-cited, deterministic first; optional Gemini wording | P1 | ✅ | negation-aware, review cap |
+| C3 | Optional Gemini layer (free key): claim extraction, report polish | P2 | ✅ | stdlib REST adapter; key optional |
+| C4 | Prompt hardening: document-as-untrusted-data, JSON-schema outputs (Practical 3) | P2 | ✅ | sanitizer + injection tests |
+| C5 | Async job flow: upload → job id → poll → result (long analyses don't block) | P2 | ✅ | queued behind one-CPU semaphore |
+| C6 | Frontend: Reproducibility + TRL tabs, Executive Report view | P3 | ✅ | |
+| C7 | Docker: `Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml` up on all machines | P2 | 🔶 | files written; needs a real `docker compose up` |
 | C8 | **GATE C demo:** full click-through, works from `docker compose up` on a clean laptop | all | ⬜ | Fri Week 3 |
 
 ## Phase D — Evaluation, buffer, demo (Week 4)
@@ -84,7 +89,7 @@ Decisions made:  (e.g., "swap flan-t5-small → distilbart for quality")
 ## Demo-day checklist
 
 - [ ] Sample papers downloaded in advance (1 CS, 1 medical/energy — diversity sells TRL story)
-- [ ] App pre-warmed: models downloaded into the `hf_cache` volume (first run downloads weights)
+- [ ] App pre-warmed: models downloaded into `.data/hf` (first run downloads weights)
 - [ ] Gemini key in `.env` **optional path tested with key removed** (graceful degradation)
 - [ ] Backup: screenshots/video of the full flow in case of Wi-Fi failure
 - [ ] Slides include: pipeline diagram, syllabus mapping table, metrics table, 10 worst errors

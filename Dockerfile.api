@@ -1,11 +1,12 @@
 # Paper2Reality API + NLP engine
 # Everything (python, deps, spacy model) is installed INSIDE this image —
-# nothing touches the host machine.
+# nothing touches the host machine. Model weights and uploads are bind-mounted
+# from the project's .data/ folder, so deleting the repo removes all of it.
 FROM python:3.11-slim
 
-# Hugging Face weights land in /models/hf, which compose mounts as the named
-# volume "hf_cache" → downloaded once per machine, survives rebuilds.
+# Hugging Face weights land in /models/hf (host: .data/hf).
 ENV HF_HOME=/models/hf \
+    P2R_DATA_DIR=/data \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
@@ -19,16 +20,18 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 # Small English model for sentence segmentation / POS / parsing (syllabus tier)
 RUN python -m spacy download en_core_web_sm
 
-# Non-root user; cache + upload dirs owned by it
+# Non-root runtime user; the entrypoint fixes bind-mount ownership and drops to it.
 RUN useradd --create-home --shell /usr/sbin/nologin app \
  && mkdir -p /models/hf /data/uploads \
- && chown -R app:app /models/hf /data/uploads
-USER app
+ && chown -R app:app /models/hf /data
 
-COPY --chown=app:app api/ ./api/
+COPY api/ ./api/
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status==200 else 1)"
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -6,6 +6,11 @@ Everything runs either **inside Docker** (recommended) or inside a **project-loc
 no administrator elevation, no system Python pollution. If a step seems to need a system
 install — stop and ask the team; there is always a containerized alternative.
 
+**Everything this project writes stays in this folder.** Uploads, job output and the
+Hugging Face model cache live in `./.data/` (git-ignored), bind-mounted into the
+containers. Delete that folder — or the whole project — and nothing is left behind
+except the Docker images themselves (removed with the command in §3).
+
 ---
 
 ## 1. Docker path (recommended — zero host installs)
@@ -21,10 +26,11 @@ docker compose up --build
 # API     -> http://localhost:8000/api/health
 ```
 
-- **First run** downloads base images + Hugging Face weights (~1-2 GB total) into the
-  named volume `hf_cache` — subsequent runs are offline. Pre-warm before demo day.
-- Everything (API, models, React build) lives in containers. Your host stays clean.
-- Stop: `docker compose down` (add `-v` only to wipe the model cache — re-downloads weights).
+- **First run** downloads base images + Hugging Face weights (~1-2 GB total) into
+  `./.data/hf` — subsequent runs are offline. Pre-warm before demo day.
+- Everything (API, models, React build) lives in containers. Your host stays clean;
+  the only project state is the local `.data/` folder.
+- Stop: `docker compose down`. This leaves `.data/` intact (next start is fast).
 
 ## 2. Local development path (venv only — for iterating on code)
 
@@ -34,13 +40,20 @@ Use this *only* when you're editing Python/JS frequently; still no global instal
 # Python side — ALWAYS inside a virtual environment
 python3 -m venv .venv                 # project-local, git-ignored
 source .venv/bin/activate             # Windows: .venv\Scripts\activate
-pip install -r requirements.txt       # safe: pip is now the venv's pip
+export PIP_CACHE_DIR="$PWD/.data/pip-cache"
+pip install --no-cache-dir -r requirements.txt   # venv's pip, no user cache
+PIP_NO_CACHE_DIR=1 python -m spacy download en_core_web_sm
 uvicorn api.main:app --reload
 
 # JS side — project-local only
-cd client && npm install              # installs into ./node_modules, never global
+cd client
+npm_config_cache=../.data/npm-cache npm install --no-audit --no-fund
 npm run dev                           # http://localhost:5173, proxies /api -> :8000
 ```
+
+The cache variables keep pip/npm downloads in `.data/` instead of your home folder;
+the venv and `node_modules` are inside the repo. The app's own default `HF_HOME` is
+`.data/hf` (see `api/pipeline/config.py`), so even local model downloads stay here.
 
 Deactivate with `deactivate`. Confirm isolation with `which pip` / `pip -V` — it must
 point inside `.venv` before installing anything. **Never** `pip install <pkg>` in a bare
@@ -53,10 +66,28 @@ shell; if you did, tell the team (fix: recreate `.venv`).
 | `api` | `Dockerfile.api` (python:3.11-slim) | 8000 -> 8000 | uvicorn, non-root user `app` |
 | `web` | `Dockerfile.web` (node build -> nginx) | 8080 -> 80 | nginx proxies `/api/*` -> `api:8000` |
 
-| Volume | Mount | Purpose |
-|--------|-------|---------|
-| `hf_cache` | `/models/hf` (api) | Hugging Face weights — downloaded once, survives rebuilds (`HF_HOME=/models/hf`) |
-| `api_data` | `/data/uploads` (api) | uploaded PDFs + job results; anonymous volume, never on host |
+| Host folder | Container mount | Purpose |
+|-------------|-----------------|---------|
+| `./.data/hf` | `/models/hf` (api) | Hugging Face weights — downloaded once, survives rebuilds (`HF_HOME=/models/hf`) |
+| `./.data` | `/data` (api) | data root; uploads land in `.data/uploads` |
+
+Both are **bind mounts inside this repository**, not Docker named volumes, so there is
+no hidden state elsewhere. Locally (without Docker) the API uses the same `.data/uploads`
+default; set `P2R_DATA_DIR` only if you deliberately want another path — remember that
+points outside the project. Deleting `.data/` removes every upload, result and model this
+project downloaded.
+
+Full cleanup (also removes the two locally built images and their build cache):
+
+```bash
+docker compose down --rmi local
+rm -rf .data
+```
+
+Docker itself stores its images and build cache in its own program-data directory; that
+is the one thing a containerized project cannot place inside the repo. The command above
+removes the images this project built. Nothing is installed system-wide (no pip/npm
+package, no service, no scheduled task).
 
 Environment (via `.env`, see `.env.example`):
 `GEMINI_API_KEY` (optional), `LOW_RAM=0|1`, `SEMANTIC=0|1`, `HF_HOME`, `PYTHONUNBUFFERED`.
@@ -66,8 +97,8 @@ Environment (via `.env`, see `.env.example`):
 - Models are pinned in `api/pipeline/config.py`; total first-download ~1.0-1.5 GB
   (NER ~250 MB, MNLI ~270 MB, DistilBART ~1.2 GB **or** flan-t5-small ~300 MB in LOW_RAM).
   See the table in [Feasibility-Analysis.md](Feasibility-Analysis.md) section 3.
-- Warm the cache once: `docker compose run --rm api python -m pipeline.warmup`
-  (downloads everything into `hf_cache`).
+- Warm the cache once: `docker compose run --rm api python -m api.pipeline.warmup`
+  (downloads everything into `.data/hf`).
 - Demo machine: build + warmup **the night before** (venue Wi-Fi is the classic failure).
 - To switch models later, edit `config.py` only — never hardcode model names in stages.
 
@@ -85,6 +116,8 @@ Environment (via `.env`, see `.env.example`):
 
 ## 6. What never goes on anyone's host machine
 
-System-wide pip packages · global npm packages · model weights outside the `hf_cache`
-volume · database servers (we don't need one) · administrator/root commands. If a future
-feature seems to need these, it needs a new container instead.
+System-wide pip packages · global npm packages · model weights outside `.data/hf` ·
+files outside this repository · database servers (we don't need one) · administrator/root
+commands. The containers themselves run as a non-root user after the entrypoint fixes
+ownership of the bind-mounted `.data/` folders. If a future feature seems to need
+anything on this list, it needs a new container instead.

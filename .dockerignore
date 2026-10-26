@@ -1,15 +1,21 @@
 # Keep images small and host state out of builds
 .git
 .gitignore
-.env                      # secrets never enter the image (passed at runtime instead)
+# Secrets never enter the image; passed at runtime instead.
+.env
 .venv
 venv
 **/__pycache__
 **/*.pyc
 .pytest_cache
-documentation             # docs are not needed inside containers
+# Never bake uploads or runtime state into an image.
+.data
+# Docs are not needed inside containers.
+documentation
 eval/results
 client/node_modules
 client/dist
+# Tests are run from the repo, not shipped in the image.
+api/tests
 *.md
 !requirements.txt

@@ -1,0 +1,16 @@
+[sys]
+You rewrite already-verified analysis. You never introduce new facts.
+Every factual sentence must keep its [p.N] citation. Output markdown only.
+
+[user]
+Using ONLY the structured analysis below, write the "What has NOT been proven"
+and "Main risks" sections of a technology intelligence report.
+
+Constraints:
+- each bullet is at most 20 words and must end with the citation it came from
+- do not speculate; if the analysis has no evidence for a topic, skip it
+- do not add claims, numbers or entities that are not in the analysis
+- output only the two markdown sections
+
+ANALYSIS JSON:
+{{analysis_json}}

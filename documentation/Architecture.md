@@ -52,6 +52,7 @@ Three tiers, mirroring the syllabus arc (classical → neural → LLM):
 | `pipeline/stats.py` | word count, reading time, section/reference/figure counts, complexity score | P1 |
 | `pipeline/tokenizer_study.py` | BPE/WordPiece/SentencePiece comparison (Practical 1) | P1 |
 | `pipeline/classical.py` | regex extractors, TF-IDF key terms, POS density, gazetteer | P1 |
+| `pipeline/models.py` | lazy HF pipeline registry, load-once cache, safe failure status | P1 |
 | `pipeline/ner.py` | HF NER + merge with gazetteer → typed entities | P1 |
 | `pipeline/summarize.py` | 3-bullet summary, ELI5 (DistilBART / Flan-T5) | P1 |
 | `pipeline/claims.py` | claim extraction (few-shot prompt or local model) | P1 |
@@ -59,6 +60,9 @@ Three tiers, mirroring the syllabus arc (classical → neural → LLM):
 | `pipeline/repro.py` | reproducibility checklist (section/keyword heuristics) | P1 |
 | `pipeline/trl.py` | deterministic TRL rubric over extracted signals | P1 |
 | `pipeline/report.py` | Executive Report assembly; optional Gemini rewrite | P2 |
+| `pipeline/llm.py` | optional Gemini REST adapter (stdlib urllib, no SDK) | P2 |
+| `pipeline/analyze.py` | orchestrator: stages, progress, timings, warnings | P1+P2 |
+| `pipeline/warmup.py` | pre-download models/tokenizers into `.data/hf` | P2 |
 | `jobs/runner.py` | background job table: status, progress, result JSON | P2 |
 | `prompts/` | prompt templates (single source of truth, versioned) | P2 |
 | `tests/` | pytest for pipeline units + evaluation scripts | P1+P3 |
@@ -110,14 +114,17 @@ serves the real thing.
       "note": "Lab-scale result; real-world conditions not demonstrated." }
   ],
   "reproducibility": {
-    "score": 72,                            // 0-100
-    "items": [ { "name": "dataset_available", "status": "yes", "evidence": "p.12, Sec 5.1" } ]
+    "score": 72,                            // 0-100, weighted over 12 signals
+    "summary": "8 present, 2 partial, 2 missing.",
+    "items": [ { "key": "dataset_available", "name": "Dataset availability",
+                 "weight": 2, "status": "yes", "points": 1.0,
+                 "evidence": "p.12 - “dataset is publicly available”" } ]
   },
   "trl": { "level": 5, "label": "Validated in a relevant environment",
            "evidence": [ {"signal": "working_prototype", "page": 8} ],
            "why": "..." },
   "report": { "achieved": [], "proven": [], "not_proven": [],
-              "risks": [], "next_steps": [] },
+              "risks": [], "next_steps": [], "markdown": "# Executive Report..." },
   "timings": { "ingest_ms": 410, "ner_ms": 2300, "summary_ms": 8900, "...": 0 },
   "warnings": ["Gemini key absent: report text is template-based."]
 }
@@ -148,7 +155,9 @@ about CO6: a laptop CPU cannot run two summarizers at once.
 client/src/
 ├── App.jsx              upload → job polling → dashboard shell with tabs
 ├── api.js               fetch wrappers for the 5 endpoints above
-├── mocks/paperAnalysis.json   the SAME shape as section 3 (Week 1 development)
+├── styles.css           design system (no UI framework dependency)
+├── components/          StatCard, VerdictPill, MarkdownLite, etc.
+├── mocks/paperAnalysis.json   the SAME shape as section 3 (demo mode)
 └── tabs/
     ├── OverviewTab.jsx      stats cards + 3 bullets + ELI5 toggle
     ├── ConceptsTab.jsx      entity chips grouped by type + key concepts
@@ -179,14 +188,18 @@ member can clone a tab in an hour. Job flow: upload → poll `GET /api/jobs/{id}
 
 ```
 docker compose
- ├─ api   build: Dockerfile.api    ports 8000    volume: hf_cache → /models/hf
+ ├─ api   build: Dockerfile.api    ports 8000    bind: ./.data/hf → /models/hf
  │                                  env: HF_HOME=/models/hf, GEMINI_API_KEY (optional)
+ │                                  bind: ./.data → /data (uploads)
  └─ web   build: Dockerfile.web    ports 8080    nginx proxies /api → api:8000
 ```
 
-- Weights persist in the named volume `hf_cache` → downloaded once, survive restarts.
-- Uploaded files live under `/data/uploads` (anonymous volume) — never on the host.
-- No host-side Python/Node installs required at all; only Docker.
+- Weights persist in `./.data/hf` → downloaded once, survive restarts/rebuilds.
+- Uploaded files live under `./.data/uploads` (bind-mounted to `/data`) — inside the repo.
+- No host-side Python/Node installs required at all; only Docker. The entrypoint drops
+to the non-root `app` user after fixing bind-mount ownership.
+- `docker compose down --rmi local && rm -rf .data` removes everything the project
+created except Docker's own image cache.
 
 ## 8. Async job flow (why not one long request)
 

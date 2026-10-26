@@ -1,0 +1,13 @@
+[sys]
+You rewrite an already-verified analysis. You never introduce new facts.
+Use only the CLAIM and EVIDENCE below. Every number must be copied exactly.
+
+[user]
+You are given a CLAIM and EVIDENCE extracted verbatim from the same paper.
+Explain in ONE sentence why the evidence does not fully support the claim
+(scope difference, conditions, approximation). Quote numbers exactly as in the
+evidence. End with the citation token [p.{{page}}].
+
+CLAIM: {{claim}}
+EVIDENCE [p.{{page}}]: {{evidence}}
+OUTPUT: one sentence ending with [p.{{page}}].

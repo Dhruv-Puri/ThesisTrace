@@ -37,7 +37,7 @@ at least one intentionally unsupported claim shows 🔴 honestly.
 
 | Day | P1 | P2 | P3 |
 |-----|----|----|----|
-| 11 | Repro checklist heuristics + weights | Docker: `Dockerfile.api` + compose (hf_cache volume) | ReproTab table + score gauge |
+| 11 | Repro checklist heuristics + weights | Docker: `Dockerfile.api` + compose (local `.data` binds) | ReproTab table + score gauge |
 | 12 | TRL rubric rules + evidence links (Stage 10) | `Dockerfile.web` + nginx proxy; `.env.example` | TRLTab ladder (1–9, current highlighted) |
 | 13 | Report template (deterministic) | Async polish: progress per stage; `/api/config` | ReportTab + markdown download |
 | 14 | Gemini adapter (optional path) + fallback tests | **Run compose on P1's and P3's machines** | Wire all tabs to real API; loading/error states |

@@ -1,4 +1,17 @@
 .freebuff/
 Idea.txt
 CSR322_2026-10-06.pdf
-.venv
+.venv/
+venv/
+.env
+
+# Project-local runtime data (uploads, job output). Safe to delete.
+.data/
+api/tests/.tmp/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Frontend
+client/node_modules/
+client/dist/

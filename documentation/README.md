@@ -70,9 +70,9 @@ paper2reality/
 
 - [x] Idea defined (see `Idea.txt`)
 - [x] Feasibility analysis and build plan (this folder)
-- [ ] Phase A — NLP MVP (Week 1)
-- [ ] Phase B — Evidence layer (Week 2)
-- [ ] Phase C — App + TRL report (Week 3)
-- [ ] Phase D — Evaluation, buffer, demo (Week 4)
+- [x] Phase A — NLP MVP **code** (Gate A needs a model-backed Docker run)
+- [x] Phase B — Evidence layer **code** (NLI path needs the Docker model cache)
+- [x] Phase C — App + Docker files (Gate C needs `docker compose up` on a clean machine)
+- [ ] Phase D — Evaluation run, error analysis, buffer, demo
 
 Track live status in [Progress.md](Progress.md).

@@ -58,7 +58,7 @@ Design rule: **everything must run CPU-only, in parallel, on 8 GB RAM.**
 
 Rules:
 - Load models **once at startup**, cache in-process; never per-request downloads.
-- HF cache lives in a Docker named volume (`hf_cache`) — weights downloaded once per machine.
+- HF cache lives in the project-local `./.data/hf` folder — downloaded once and easy to delete.
 - If a machine is 4 GB RAM: run `flan-t5-small` + DistilBERT only (documented toggle).
 - Do NOT pull `bart-large`, `t5-large`, or full LLMs locally — quality gain doesn't justify it.
 
@@ -95,7 +95,7 @@ template-only (no Gemini). **Never cut:** citations, claim evidence, evaluation.
 | 6 | Frontend takes longer than expected | H | H | Mock JSON contract on Day 1; tabs are clones of each other; no fancy state mgmt |
 | 7 | Prompt injection via uploaded document | M | M | See [Prompts-and-Grounding.md](Prompts-and-Grounding.md) section 5; test suite of hostile PDFs |
 | 8 | One member drops / gets busy | M | H | Contract-first work; docs are the handover; each phase demoable independently |
-| 9 | First-run model download fails (no internet at venue) | L | H | Pre-warm `hf_cache` volume; demo laptop carries the volume; screenshots backup |
+| 9 | First-run model download fails (no internet at venue) | L | H | Pre-warm `.data/hf`; copy the folder to the demo laptop; screenshots backup |
 | 10 | Scope creep ("let's add market analysis") | H | M | Section 1 of this file is binding; new ideas go to Future Scope only |
 
 ## 7. Cost (runs at zero)

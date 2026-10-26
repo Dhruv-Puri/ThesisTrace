@@ -128,8 +128,9 @@ PDF → 1 INGEST → 2 TOKENIZE → 3 CLASSICAL STATS/TF-IDF → 4 NER/GAZETTEER
   (`github.com|gitlab`), model details (architecture names present), hyperparameters
   (learning rate/batch/epochs numbers present), preprocessing described, random seed
   mentioned, environment/dependencies (`requirements|conda|docker`), experimental procedure
-  (steps in Methods), sample size stated, baseline described
-- **Score:** weighted sum → 0–100 (weights in `api/pipeline/repro.py`, documented in report)
+  (steps in Methods), train/validation/test split, sample size stated, baseline described,
+  evaluation metrics with values
+- **Score:** weighted sum → 0–100 (12 signals; weights in `api/pipeline/repro.py`, documented in report)
 - **Deliberately NOT doing:** running any code (scope cut — see [Feasibility-Analysis.md](Feasibility-Analysis.md))
 - **Syllabus:** experimental/procedural reading + evidence citation; supports CO4-style
   "check what's actually stated, not what's assumed"

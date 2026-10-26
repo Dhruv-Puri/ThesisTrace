@@ -1,7 +1,10 @@
 # Paper2Reality — one command runs the whole system:
 #   docker compose up --build
 # web UI → http://localhost:8080   API → http://localhost:8000/api/health
-# Installs nothing on the host except Docker itself.
+#
+# Installs nothing on the host except Docker itself. The only persistent state
+# is the project-local .data/ folder (models + uploads), bind-mounted below,
+# so deleting this folder removes everything the app created.
 
 services:
   api:
@@ -12,13 +15,14 @@ services:
       - "8000:8000"
     environment:
       HF_HOME: /models/hf
+      P2R_DATA_DIR: /data                 # host: ./.data (project-local)
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}   # from .env; empty = fully local mode
       LOW_RAM: ${LOW_RAM:-0}
       SEMANTIC: ${SEMANTIC:-0}
       PYTHONUNBUFFERED: "1"
     volumes:
-      - hf_cache:/models/hf      # HF weights: downloaded once, survives rebuilds
-      - api_data:/data/uploads   # uploaded PDFs + job results (never on host)
+      - ./.data/hf:/models/hf     # HF weights: downloaded once, survives rebuilds
+      - ./.data:/data             # uploads + job results (inside this folder)
     restart: unless-stopped
 
   web:
@@ -31,7 +35,3 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  hf_cache:
-  api_data:

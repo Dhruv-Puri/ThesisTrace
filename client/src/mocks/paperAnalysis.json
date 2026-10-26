@@ -1,0 +1,768 @@
+{
+  "job_id": "demo-4f2c9a",
+  "status": "done",
+  "progress": 100,
+  "stage": "Report ready",
+  "filename": "sparseroute-demo.pdf",
+  "doc": {
+    "filename": "sparseroute-demo.pdf",
+    "pages": 9,
+    "title": "SparseRoute: Adaptive Sparsity for Efficient Neural Machine Translation",
+    "words": 4812,
+    "source": "pdf",
+    "truncated": false,
+    "page_count_total": 9,
+    "injection_flags": 0
+  },
+  "stats": {
+    "words": 4812,
+    "unique_words": 1437,
+    "reading_minutes": 22,
+    "sections": 7,
+    "references": 34,
+    "figures": 4,
+    "tables": 3,
+    "technical_term_density": 0.071,
+    "avg_sentence_length": 24.8,
+    "complexity_score": 6.8,
+    "complexity_parts": {
+      "term_density": 8.1,
+      "sentence_length": 6.5,
+      "pos_mix": 6.9,
+      "references": 9.7,
+      "structure": 7.7,
+      "lexical_variety": 6.6
+    },
+    "pos": {
+      "available": true,
+      "noun_ratio": 0.342,
+      "verb_ratio": 0.148,
+      "adj_ratio": 0.081
+    }
+  },
+  "summary": {
+    "bullets": [
+      "SparseRoute adds a learned top-2 router that activates only a subset of feed-forward blocks, reducing the compute needed per translated token.",
+      "On WMT14 English–German the method lowers median inference latency by 42% while keeping BLEU within 0.3 points of a dense Transformer baseline.",
+      "The evidence is limited to a single-GPU lab setting; energy savings and low-resource generalization are claimed but not directly measured."
+    ],
+    "eli5": "Imagine a translation model as a large team of specialists. SparseRoute gives every word a small switchboard that wakes only the two specialists it needs, instead of waking the whole team. On one benchmark it made translation about 42% faster while keeping quality almost the same.",
+    "abstractive_supported": true,
+    "method": "abstractive",
+    "eli5_method": "abstractive"
+  },
+  "entities": [
+    {
+      "text": "SparseRoute",
+      "type": "MODEL",
+      "start": 120,
+      "end": 131,
+      "page": 1,
+      "source": "gazetteer",
+      "canonical": "SparseRoute"
+    },
+    {
+      "text": "WMT14",
+      "type": "DATASET",
+      "start": 840,
+      "end": 845,
+      "page": 2,
+      "source": "gazetteer",
+      "canonical": "WMT14"
+    },
+    {
+      "text": "Transformer",
+      "type": "MODEL",
+      "start": 932,
+      "end": 943,
+      "page": 2,
+      "source": "model",
+      "canonical": "Transformer"
+    },
+    {
+      "text": "BLEU",
+      "type": "METRIC",
+      "start": 1024,
+      "end": 1028,
+      "page": 2,
+      "source": "gazetteer",
+      "canonical": "BLEU"
+    },
+    {
+      "text": "feed-forward blocks",
+      "type": "ALGORITHM",
+      "start": 310,
+      "end": 329,
+      "page": 3,
+      "source": "model",
+      "canonical": "feed-forward blocks"
+    },
+    {
+      "text": "top-2 gate",
+      "type": "ALGORITHM",
+      "start": 1502,
+      "end": 1512,
+      "page": 3,
+      "source": "gazetteer",
+      "canonical": "top-2 gate"
+    },
+    {
+      "text": "English–German",
+      "type": "DATASET",
+      "start": 2201,
+      "end": 2215,
+      "page": 4,
+      "source": "gazetteer",
+      "canonical": "English–German"
+    },
+    {
+      "text": "A100",
+      "type": "HARDWARE",
+      "start": 3120,
+      "end": 3124,
+      "page": 6,
+      "source": "model",
+      "canonical": "A100"
+    },
+    {
+      "text": "BLEU",
+      "type": "METRIC",
+      "start": 3510,
+      "end": 3514,
+      "page": 7,
+      "source": "gazetteer",
+      "canonical": "BLEU"
+    },
+    {
+      "text": "Dr. Rao",
+      "type": "PER",
+      "start": 4210,
+      "end": 4217,
+      "page": 1,
+      "source": "model",
+      "canonical": "Dr. Rao"
+    },
+    {
+      "text": "National Energy Lab",
+      "type": "ORG",
+      "start": 4890,
+      "end": 4908,
+      "page": 9,
+      "source": "model",
+      "canonical": "National Energy Lab"
+    },
+    {
+      "text": "low-resource language pairs",
+      "type": "TECH",
+      "start": 5010,
+      "end": 5039,
+      "page": 9,
+      "source": "gazetteer",
+      "canonical": "low-resource language pairs"
+    }
+  ],
+  "key_concepts": {
+    "models": [
+      {
+        "name": "SparseRoute",
+        "type": "MODEL",
+        "count": 18,
+        "pages": [
+          1,
+          2,
+          3,
+          6,
+          9
+        ]
+      },
+      {
+        "name": "Transformer",
+        "type": "MODEL",
+        "count": 11,
+        "pages": [
+          1,
+          2,
+          7
+        ]
+      },
+      {
+        "name": "top-2 gate",
+        "type": "ALGORITHM",
+        "count": 4,
+        "pages": [
+          3,
+          4
+        ]
+      }
+    ],
+    "datasets": [
+      {
+        "name": "WMT14",
+        "type": "DATASET",
+        "count": 9,
+        "pages": [
+          2,
+          4,
+          7
+        ]
+      },
+      {
+        "name": "English–German",
+        "type": "DATASET",
+        "count": 4,
+        "pages": [
+          4,
+          7
+        ]
+      },
+      {
+        "name": "English–French",
+        "type": "DATASET",
+        "count": 2,
+        "pages": [
+          8
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "name": "BLEU",
+        "type": "METRIC",
+        "count": 6,
+        "pages": [
+          2,
+          7
+        ]
+      },
+      {
+        "name": "latency",
+        "type": "METRIC",
+        "count": 5,
+        "pages": [
+          2,
+          6
+        ]
+      },
+      {
+        "name": "F1",
+        "type": "METRIC",
+        "count": 1,
+        "pages": [
+          7
+        ]
+      }
+    ],
+    "others": [
+      {
+        "name": "Dr. Rao",
+        "type": "PER",
+        "count": 2,
+        "pages": [
+          1,
+          9
+        ]
+      },
+      {
+        "name": "National Energy Lab",
+        "type": "ORG",
+        "count": 1,
+        "pages": [
+          9
+        ]
+      }
+    ]
+  },
+  "claims": [
+    {
+      "id": "c1",
+      "text": "SparseRoute reduces inference latency by 42% compared with the dense Transformer baseline.",
+      "claim_type": "quantitative",
+      "section": "Abstract",
+      "page": 1,
+      "sentence_id": 4,
+      "extraction": "llm",
+      "verdict": "supported",
+      "confidence": 0.91,
+      "evidence": [
+        {
+          "page": 6,
+          "sentence_id": 148,
+          "text": "On WMT14 En–De, SparseRoute lowered median latency from 120 ms to 70 ms per sentence (42.1% reduction) while BLEU changed by 0.2 points.",
+          "relevance": 0.87,
+          "nli": "entailment",
+          "nli_score": 0.94
+        },
+        {
+          "page": 7,
+          "sentence_id": 171,
+          "text": "Latency was measured with batch size 16 on a single A100; the router itself adds 4.1% overhead.",
+          "relevance": 0.61,
+          "nli": "neutral",
+          "nli_score": 0.71
+        }
+      ],
+      "note": "",
+      "source": "nli"
+    },
+    {
+      "id": "c2",
+      "text": "The method maintains BLEU within 0.3 points of the dense model on WMT14 English–German.",
+      "claim_type": "quantitative",
+      "section": "Abstract",
+      "page": 1,
+      "sentence_id": 5,
+      "extraction": "llm",
+      "verdict": "supported",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "page": 7,
+          "sentence_id": 164,
+          "text": "BLEU on WMT14 En–De: 28.7 for the dense baseline and 28.4 for SparseRoute, a difference of 0.3 points.",
+          "relevance": 0.83,
+          "nli": "entailment",
+          "nli_score": 0.9
+        }
+      ],
+      "note": "",
+      "source": "nli"
+    },
+    {
+      "id": "c3",
+      "text": "SparseRoute can cut energy consumption by up to 60% in data-centre deployments.",
+      "claim_type": "quantitative",
+      "section": "Conclusion",
+      "page": 9,
+      "sentence_id": 244,
+      "extraction": "heuristic",
+      "verdict": "partially_supported",
+      "confidence": 0.64,
+      "evidence": [
+        {
+          "page": 8,
+          "sentence_id": 212,
+          "text": "Energy per generated token fell by 57% on a single A100 in our lab; we did not measure routing overhead in a data-centre network.",
+          "relevance": 0.55,
+          "nli": "neutral",
+          "nli_score": 0.67
+        }
+      ],
+      "note": "The evidence reports 57% on one GPU, not “up to 60%” in data-centre conditions. The scope is wider than the measurement [p.8].",
+      "source": "nli"
+    },
+    {
+      "id": "c4",
+      "text": "The approach may generalize to low-resource language pairs.",
+      "claim_type": "qualitative",
+      "section": "Conclusion",
+      "page": 9,
+      "sentence_id": 245,
+      "extraction": "heuristic",
+      "verdict": "insufficient",
+      "confidence": 0.3,
+      "evidence": [
+        {
+          "page": 8,
+          "sentence_id": 220,
+          "text": "We evaluate English–German and English–French only; no low-resource pair is included in the experiments.",
+          "relevance": 0.42,
+          "nli": "neutral",
+          "nli_score": 0.58
+        }
+      ],
+      "note": "The paper explicitly limits evaluation to two high-resource pairs, so the generalization claim is unverified rather than false [p.8].",
+      "source": "nli"
+    },
+    {
+      "id": "c5",
+      "text": "Routing overhead becomes negligible above batch size 16.",
+      "claim_type": "comparative",
+      "section": "Results",
+      "page": 7,
+      "sentence_id": 176,
+      "extraction": "heuristic",
+      "verdict": "partially_supported",
+      "confidence": 0.58,
+      "evidence": [
+        {
+          "page": 7,
+          "sentence_id": 177,
+          "text": "Overhead is 4.1% at batch size 16 and 2.8% at batch size 32 on one GPU.",
+          "relevance": 0.69,
+          "nli": "neutral",
+          "nli_score": 0.72
+        }
+      ],
+      "note": "The measured overhead is still 2.8–4.1%, which is not “negligible”; the claim overstates the result [p.7].",
+      "source": "nli"
+    },
+    {
+      "id": "c6",
+      "text": "SparseRoute is ready for production deployment across all model sizes.",
+      "claim_type": "qualitative",
+      "section": "Conclusion",
+      "page": 9,
+      "sentence_id": 248,
+      "extraction": "heuristic",
+      "verdict": "insufficient",
+      "confidence": 0.26,
+      "evidence": [
+        {
+          "page": 9,
+          "sentence_id": 250,
+          "text": "Future work will study deployment in production and larger model sizes.",
+          "relevance": 0.31,
+          "nli": "neutral",
+          "nli_score": 0.61
+        }
+      ],
+      "note": "The sentence itself says deployment is future work. No operational evidence was found [p.9].",
+      "source": "nli"
+    }
+  ],
+  "reproducibility": {
+    "score": 63,
+    "summary": "5 present, 3 partial, 4 missing.",
+    "note": "Text-level audit only; no code was executed.",
+    "items": [
+      {
+        "key": "dataset_available",
+        "name": "Dataset availability",
+        "weight": 2,
+        "status": "yes",
+        "points": 1.0,
+        "evidence": "p.5 - “WMT14 is publicly available through the workshop repository.”"
+      },
+      {
+        "key": "code_available",
+        "name": "Source code availability",
+        "weight": 2,
+        "status": "yes",
+        "points": 1.0,
+        "evidence": "p.5 - “Code: https://github.com/example/sparseroute.”"
+      },
+      {
+        "key": "model_details",
+        "name": "Model architecture details",
+        "weight": 1,
+        "status": "partial",
+        "points": 0.5,
+        "evidence": "p.3 names a Transformer with 12 layers and hidden size 768, but not the full layer configuration."
+      },
+      {
+        "key": "hyperparameters",
+        "name": "Hyperparameters",
+        "weight": 2,
+        "status": "yes",
+        "points": 1.0,
+        "evidence": "p.4 - learning rate 3e-4, batch size 64, 30 epochs, Adam."
+      },
+      {
+        "key": "preprocessing",
+        "name": "Preprocessing",
+        "weight": 1,
+        "status": "yes",
+        "points": 1.0,
+        "evidence": "p.4 - “We use the standard WMT tokenizer with 32k BPE merges.”"
+      },
+      {
+        "key": "random_seed",
+        "name": "Random seed",
+        "weight": 1,
+        "status": "no",
+        "points": 0.0,
+        "evidence": "No random seed is reported."
+      },
+      {
+        "key": "environment",
+        "name": "Software environment",
+        "weight": 1,
+        "status": "partial",
+        "points": 0.5,
+        "evidence": "p.4 - “PyTorch 2.1” is named, but no dependency lock or Docker image is provided."
+      },
+      {
+        "key": "procedure",
+        "name": "Experimental procedure",
+        "weight": 1,
+        "status": "no",
+        "points": 0.0,
+        "evidence": "The training and evaluation steps are not described in enough detail to repeat them."
+      },
+      {
+        "key": "data_split",
+        "name": "Train / validation / test split",
+        "weight": 1,
+        "status": "no",
+        "points": 0.0,
+        "evidence": "No train/validation/test split is described."
+      },
+      {
+        "key": "sample_size",
+        "name": "Sample size",
+        "weight": 1,
+        "status": "no",
+        "points": 0.0,
+        "evidence": "No sample size (N) is stated."
+      },
+      {
+        "key": "baseline",
+        "name": "Baseline comparison",
+        "weight": 1,
+        "status": "yes",
+        "points": 1.0,
+        "evidence": "p.6 - dense Transformer baseline."
+      },
+      {
+        "key": "metrics",
+        "name": "Evaluation metrics",
+        "weight": 1,
+        "status": "partial",
+        "points": 0.5,
+        "evidence": "p.7 - BLEU 28.4 vs 28.7 and latency 70 ms vs 120 ms, but no variance or significance test."
+      }
+    ]
+  },
+  "trl": {
+    "level": 4,
+    "label": "Technology validated in lab",
+    "why": "Level 4 (Technology validated in lab) is the highest readiness level supported by the paper's own wording. Evidence: baseline [p.6]; experiment [p.6]; method [p.3]; problem [p.1]. No field/pilot evidence was found, and the discussion explicitly says no production deployment was conducted. Of 6 extracted claims, 2 cleared the evidence threshold; the rest should be read as unverified, not proven false.",
+    "note": "No field/pilot evidence was found.",
+    "review_document": false,
+    "signals": {
+      "problem": true,
+      "method": true,
+      "experiment": true,
+      "baseline": true,
+      "relevant": false,
+      "field": false,
+      "operational": false,
+      "certified": false,
+      "proven": false
+    },
+    "evidence": [
+      {
+        "signal": "problem",
+        "level": 1,
+        "page": 1,
+        "quote": "Deployment is limited by inference cost."
+      },
+      {
+        "signal": "method",
+        "level": 2,
+        "page": 3,
+        "quote": "We introduce a learned top-2 router over feed-forward blocks."
+      },
+      {
+        "signal": "experiment",
+        "level": 3,
+        "page": 6,
+        "quote": "We evaluate on WMT14 English–German."
+      },
+      {
+        "signal": "baseline",
+        "level": 4,
+        "page": 6,
+        "quote": "The dense Transformer is the baseline."
+      }
+    ]
+  },
+  "report": {
+    "achieved": [
+      "Reports 4,812 words across 7 detected sections; estimated reading time 22 min [p.1].",
+      "Key concepts extracted from the text include WMT14, English–German, SparseRoute, Transformer, BLEU. [p.2]",
+      "2 of 6 extracted claims cleared the evidence threshold; 2 were partially supported and 2 remained unverified.",
+      "Reproducibility audit scored 63/100 (5 present, 3 partial, 4 missing).",
+      "Readiness assessment: TRL 4/9 - Technology validated in lab [p.6]."
+    ],
+    "proven": [
+      "SparseRoute reduces inference latency by 42% compared with the dense Transformer baseline. [p.6]",
+      "The method maintains BLEU within 0.3 points of the dense model on WMT14 English–German. [p.7]"
+    ],
+    "not_proven": [
+      "SparseRoute can cut energy consumption by up to 60% in data-centre deployments. [p.8] The evidence reports 57% on one GPU, not “up to 60%” in data-centre conditions. The scope is wider than the measurement [p.8].",
+      "The approach may generalize to low-resource language pairs. [p.8] The paper explicitly limits evaluation to two high-resource pairs, so the generalization claim is unverified rather than false [p.8].",
+      "Routing overhead becomes negligible above batch size 16. [p.7] The measured overhead is still 2.8–4.1%, which is not “negligible” [p.7].",
+      "SparseRoute is ready for production deployment across all model sizes. [p.9] The sentence itself says deployment is future work [p.9]."
+    ],
+    "risks": [
+      "Random seed is not reported in the extracted text, so independent reproduction is harder.",
+      "Software environment is only partially documented, which limits independent verification.",
+      "2 claim(s) are only partially supported; their wording is broader than the retrieved evidence.",
+      "Readiness stops at TRL 4; no field or operational evidence was found in the paper."
+    ],
+    "next_steps": [
+      "Report full hyperparameters and random seeds so results can be repeated.",
+      "Add a comparison against a clear baseline to establish the claimed gain.",
+      "Run a field/pilot evaluation to move beyond TRL 4.",
+      "Clarify the scope of the partially supported claim with a direct experiment [p.8]."
+    ],
+    "markdown": "# Executive Report - SparseRoute: Adaptive Sparsity for Efficient Neural Machine Translation\n\n**Source:** `sparseroute-demo.pdf` - 9 pages - about 22 min read\n**Readiness:** TRL 4/9 - Technology validated in lab\n**Reproducibility:** 63/100 - 5 present, 3 partial, 4 missing.\n**Claim check:** 2 supported - 2 partial - 2 insufficient\n\n## 1. What the paper achieved\n- Reports 4,812 words across 7 detected sections; estimated reading time 22 min [p.1].\n- Key concepts extracted from the text include WMT14, English–German, SparseRoute, Transformer, BLEU. [p.2]\n- 2 of 6 extracted claims cleared the evidence threshold; 2 were partially supported and 2 remained unverified.\n- Reproducibility audit scored 63/100 (5 present, 3 partial, 4 missing).\n- Readiness assessment: TRL 4/9 - Technology validated in lab [p.6].\n\n## 2. What is proven\n- SparseRoute reduces inference latency by 42% compared with the dense Transformer baseline. [p.6]\n- The method maintains BLEU within 0.3 points of the dense model on WMT14 English–German. [p.7]\n\n## 3. What is not proven\n- SparseRoute can cut energy consumption by up to 60% in data-centre deployments. [p.8] The evidence reports 57% on one GPU, not “up to 60%” in data-centre conditions. [p.8]\n- The approach may generalize to low-resource language pairs. [p.8] The paper explicitly limits evaluation to two high-resource pairs. [p.8]\n\n## 4. Main risks\n- Random seed is not reported, so independent reproduction is harder.\n- The software environment is only partially documented.\n- Readiness stops at TRL 4; no field or operational evidence was found.\n\n## 5. Recommended next steps\n- Report full hyperparameters and random seeds so results can be repeated.\n- Run a field/pilot evaluation to move beyond TRL 4.\n- Clarify the scope of the energy claim with a direct data-centre experiment [p.8].\n\n## Appendix - at a glance\n- Datasets: WMT14, English–German, English–French\n- Models & methods: SparseRoute, Transformer, top-2 gate\n- Metrics: BLEU, latency, F1\n- Technical-term density: 0.071\n- Complexity score: 6.8/10\n- Reproducibility note: Text-level audit only; no code was executed.\n- TRL note: No field/pilot evidence was found.\n\n_Generated by Paper2Reality. Every verdict is based on retrieved passages from this document; the language model never assigns verdicts._\n"
+  },
+  "tokenization": {
+    "note": "BPE, WordPiece and SentencePiece tokenizers were all available.",
+    "tokenizers": [
+      {
+        "name": "Whitespace + punctuation (baseline)",
+        "model": "builtin",
+        "available": true,
+        "tokens": 5130,
+        "vocab_size": 1682,
+        "tokens_per_word": 1.07,
+        "unk_rate": 0.0,
+        "note": "Classical word-level tokenization."
+      },
+      {
+        "name": "BPE (GPT-2)",
+        "model": "gpt2",
+        "available": true,
+        "tokens": 5984,
+        "vocab_size": 50257,
+        "tokens_per_word": 1.24,
+        "unk_rate": 0.0,
+        "note": ""
+      },
+      {
+        "name": "WordPiece (BERT)",
+        "model": "bert-base-uncased",
+        "available": true,
+        "tokens": 5742,
+        "vocab_size": 30522,
+        "tokens_per_word": 1.19,
+        "unk_rate": 0.0,
+        "note": ""
+      },
+      {
+        "name": "SentencePiece (T5)",
+        "model": "google/flan-t5-small",
+        "available": true,
+        "tokens": 5891,
+        "vocab_size": 32100,
+        "tokens_per_word": 1.22,
+        "unk_rate": 0.0,
+        "note": ""
+      }
+    ],
+    "term_splits": [
+      {
+        "term": "SparseRoute",
+        "BPE (GPT-2)": 3,
+        "WordPiece (BERT)": 3,
+        "SentencePiece (T5)": 3
+      },
+      {
+        "term": "feed-forward",
+        "BPE (GPT-2)": 4,
+        "WordPiece (BERT)": 4,
+        "SentencePiece (T5)": 4
+      },
+      {
+        "term": "BLEU",
+        "BPE (GPT-2)": 2,
+        "WordPiece (BERT)": 1,
+        "SentencePiece (T5)": 2
+      },
+      {
+        "term": "data-centre",
+        "BPE (GPT-2)": 4,
+        "WordPiece (BERT)": 4,
+        "SentencePiece (T5)": 4
+      }
+    ]
+  },
+  "key_terms": [
+    {
+      "term": "sparse routing",
+      "score": 0.84
+    },
+    {
+      "term": "inference latency",
+      "score": 0.79
+    },
+    {
+      "term": "feed-forward blocks",
+      "score": 0.71
+    },
+    {
+      "term": "dense baseline",
+      "score": 0.66
+    },
+    {
+      "term": "english–german",
+      "score": 0.61
+    },
+    {
+      "term": "energy per token",
+      "score": 0.54
+    }
+  ],
+  "signals": {
+    "percentages": [
+      {
+        "value": "42%",
+        "page": 2,
+        "context": "reduces inference latency by 42% compared with the dense Transformer baseline"
+      },
+      {
+        "value": "57%",
+        "page": 8,
+        "context": "Energy per generated token fell by 57% on a single A100"
+      }
+    ],
+    "p_values": [
+      {
+        "value": "p < 0.01",
+        "page": 7,
+        "context": "The latency difference is significant (p < 0.01)."
+      }
+    ],
+    "metric_mentions": [
+      {
+        "metric": "bleu",
+        "value": "28.4",
+        "page": 7,
+        "context": "BLEU on WMT14 En–De: 28.7 dense, 28.4 SparseRoute"
+      },
+      {
+        "metric": "accuracy",
+        "value": "91.2",
+        "page": 7,
+        "context": "Router accuracy is 91.2%."
+      }
+    ],
+    "links": [
+      {
+        "url": "https://github.com/example/sparseroute",
+        "page": 5
+      },
+      {
+        "url": "https://huggingface.co/datasets/wmt14",
+        "page": 5
+      }
+    ]
+  },
+  "timings": {
+    "ingest_ms": 640,
+    "classical_ms": 1180,
+    "tokenizer_ms": 210,
+    "ner_ms": 2360,
+    "summary_ms": 8940,
+    "claims_ms": 1120,
+    "evidence_ms": 1420,
+    "repro_ms": 18,
+    "trl_ms": 12,
+    "report_ms": 9,
+    "total_ms": 15909
+  },
+  "warnings": [
+    "No GEMINI_API_KEY set - claims use the heuristic extractor and the report uses local templates. The full pipeline still runs.",
+    "NLI verdicts computed locally with cross-encoder/nli-deberta-v3-small."
+  ],
+  "pipeline_version": "0.2.0",
+  "engine": {
+    "tfidf": "scikit-learn",
+    "pos": true,
+    "tokenizers": 4,
+    "gemini": false
+  }
+}
