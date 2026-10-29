@@ -16,6 +16,21 @@ It is deliberately *not* a chat-with-your-PDF wrapper: the classical NLP pipelin
 the retrieval, the NLI cross-encoder assigns verdicts, and the optional LLM only writes
 prose over already-retrieved text.
 
+## Screenshots (captured from the running app)
+
+| | |
+|---|---|
+| ![Landing page](documentation/screenshots/landing.png) | ![Dashboard overview](documentation/screenshots/dashboard-overview.png) |
+| ![ClaimCheck](documentation/screenshots/dashboard-claimcheck.png) | ![TRL readiness](documentation/screenshots/dashboard-trl.png) |
+
+- Landing page with the highlighter intro and upload/demo entry points
+- Dashboard: score cards, pipeline-note transparency, tab bar with counters
+- ClaimCheck: a claim's verdict with the exact retrieved passages and page citations
+- TRL: the readiness rubric with the signals found (and explicitly not found)
+
+Full gallery: [documentation/screenshots/](documentation/screenshots/) ·
+What has been built so far: [documentation/Work-Done-So-Far.md](documentation/Work-Done-So-Far.md).
+
 ---
 
 ## Quick start (Docker — recommended)
@@ -191,4 +206,6 @@ requirements.txt     Python dependencies (installed only in Docker / .venv)
 
 Start with [documentation/README.md](documentation/README.md); the architecture and
 pipeline specs are [documentation/Architecture.md](documentation/Architecture.md) and
-[documentation/NLP-Pipeline.md](documentation/NLP-Pipeline.md).
+[documentation/NLP-Pipeline.md](documentation/NLP-Pipeline.md). A dated changelog of
+everything built so far lives in
+[documentation/Work-Done-So-Far.md](documentation/Work-Done-So-Far.md).

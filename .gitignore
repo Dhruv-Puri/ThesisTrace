@@ -15,4 +15,4 @@ __pycache__/
 # Frontend
 client/node_modules/
 client/dist/
-screenshots/
+/screenshots/

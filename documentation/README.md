@@ -31,6 +31,7 @@ top (never the other way around).
 | 7 | [Evaluation.md](Evaluation.md) | Metrics, gold-standard set, error-analysis protocol (maps to Practical 6) |
 | 8 | [Build-Plan-Roadmap.md](Build-Plan-Roadmap.md) | The 4-week sprint plan with day-level tasks, roles, phase gates, future phases |
 | 9 | [Setup-and-Containerization.md](Setup-and-Containerization.md) | How to run everything with Docker (zero host installs) or a local `.venv` |
+| 10 | [Work-Done-So-Far.md](Work-Done-So-Far.md) | Dated changelog of everything built, verified and committed — with live screenshots |
 
 ## Repository map (target state)
 
@@ -51,6 +52,9 @@ paper2reality/
 ├── .env.example            Template for optional GEMINI_API_KEY
 └── .dockerignore           Keeps images small and your host clean
 ```
+
+Real screenshots of every major screen are in [screenshots/](screenshots/) (both the
+dashboard tabs and the landing page) and are embedded in the repository README.
 
 ## Ground rules (team agreement)
 
