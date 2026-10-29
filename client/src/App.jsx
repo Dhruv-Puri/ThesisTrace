@@ -7,17 +7,17 @@ import OverviewTab from "./tabs/OverviewTab.jsx";
 import ReportTab from "./tabs/ReportTab.jsx";
 import ReproTab from "./tabs/ReproTab.jsx";
 import TRLTab from "./tabs/TRLTab.jsx";
-import { formatNumber } from "./components/ui.jsx";
+import { formatNumber, Icon } from "./components/ui.jsx";
 
 const MAX_MB = 30;
 const ALLOWED = ["pdf", "txt", "md"];
 const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "concepts", label: "Key concepts" },
-  { id: "claims", label: "ClaimCheck" },
-  { id: "repro", label: "Reproducibility" },
-  { id: "trl", label: "TRL" },
-  { id: "report", label: "Report" },
+  { id: "overview", label: "Overview", icon: "overview", tone: "overview", hint: "3-bullet summary + a beginner explanation" },
+  { id: "concepts", label: "Key concepts", icon: "concepts", tone: "concepts", hint: "Datasets, models, metrics, organisations" },
+  { id: "claims", label: "ClaimCheck", icon: "claims", tone: "claims", hint: "Claims checked against the paper's own evidence" },
+  { id: "repro", label: "Reproducibility", icon: "repro", tone: "repro", hint: "12 signals: data, code, seeds, baselines" },
+  { id: "trl", label: "TRL", icon: "trl", tone: "trl", hint: "Technology readiness level 1–9, with evidence" },
+  { id: "report", label: "Report", icon: "report", tone: "report", hint: "Cited executive report, downloadable" },
 ];
 
 function validateFile(file) {
@@ -64,7 +64,7 @@ function Dropzone({ onFile, busy }) {
           event.target.value = "";
         }}
       />
-      <span className="drop-icon" aria-hidden="true">↥</span>
+      <span className="drop-icon" aria-hidden="true"><Icon name="upload" size={22} /></span>
       <span className="drop-copy">
         <strong>{busy ? "Uploading…" : "Drop a paper here"}</strong>
         <span>PDF or plain text · up to {MAX_MB} MB · processed locally</span>
@@ -79,11 +79,11 @@ function Landing({ onFile, onDemo, busy }) {
     <main className="landing">
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">CSR322 · Natural Language Processing</p>
+          <p className="eyebrow">Read a paper the way you'd want to take notes on it.</p>
           <h1>
             From paper
             <br />
-            to <em>evidence</em>.
+            to <span className="hl">evidence</span>.
           </h1>
           <p className="lede">
             Upload a research paper. Paper2Reality explains what it does, extracts the key
@@ -93,14 +93,14 @@ function Landing({ onFile, onDemo, busy }) {
           <Dropzone onFile={onFile} busy={busy} />
           <div className="demo-row">
             <button type="button" className="text-button" onClick={onDemo}>
-              Or explore a demo analysis →
+              Or explore a demo analysis
             </button>
-            <span className="fine-print">no upload, no network</span>
+            <span className="fine-print">nothing leaves your machine</span>
           </div>
         </div>
 
         <aside className="hero-aside">
-          <p className="aside-label">The pipeline</p>
+          <p className="aside-label">How it works</p>
           <ol className="pipeline-list">
             <li><span className="num">01</span><div><strong>Read</strong><small>PDF → pages → sections</small></div></li>
             <li><span className="num">02</span><div><strong>Tokenize</strong><small>BPE · WordPiece · SentencePiece</small></div></li>
@@ -118,17 +118,17 @@ function Landing({ onFile, onDemo, busy }) {
 
       <section className="capabilities">
         <article>
-          <span className="cap-index">01</span>
+          <span className="cap-index"><Icon name="claims" size={20} /></span>
           <h2>Grounded claims</h2>
           <p>Every verdict points to the exact sentence and page it came from. Unsupported is a valid answer.</p>
         </article>
         <article>
-          <span className="cap-index">02</span>
+          <span className="cap-index"><Icon name="trl" size={20} /></span>
           <h2>Readiness, not hype</h2>
           <p>A deterministic TRL rubric over the paper’s own wording, with the evidence quoted beside each level.</p>
         </article>
         <article>
-          <span className="cap-index">03</span>
+          <span className="cap-index"><Icon name="repro" size={20} /></span>
           <h2>Reproducibility gaps</h2>
           <p>Twelve concrete signals — dataset, code, seed, hyperparameters, baseline — not a vague “quality” score.</p>
         </article>
@@ -159,10 +159,10 @@ function ProgressView({ job, uploading }) {
           <span>{progress}%</span>
         </div>
         <div className="progress-steps">
-          <span>Retrieval</span>
-          <span>NLI</span>
-          <span>TRL</span>
-          <span>Report</span>
+          <span><Icon name="concepts" size={12} /> Retrieval</span>
+          <span><Icon name="claims" size={12} /> NLI</span>
+          <span><Icon name="trl" size={12} /> TRL</span>
+          <span><Icon name="report" size={12} /> Report</span>
         </div>
         <p className="fine-print">
           A CPU analysis takes roughly 15–45 seconds. The browser polls every 1.5 seconds, so
@@ -214,12 +214,11 @@ function Dashboard({ analysis, onReset }) {
       <section className="paper-head">
         <div>
           <p className="eyebrow">
-            {isDemo ? "Demo analysis" : "Analysis complete"} · {analysis.doc?.pages || 0} pages
+            {isDemo ? "Demo analysis" : "Analysis complete"}: {analysis.doc?.pages || 0} pages
           </p>
           <h1>{analysis.doc?.title || "Untitled paper"}</h1>
           <p className="paper-meta">
-            {analysis.doc?.filename || "document"} · {formatNumber(analysis.doc?.words || stats.words)} words
-            · about {stats.reading_minutes || 0} min read
+            {formatNumber(analysis.doc?.words || stats.words)} words, about {stats.reading_minutes || 0} min read
           </p>
         </div>
         <div className="paper-actions">
@@ -230,26 +229,30 @@ function Dashboard({ analysis, onReset }) {
       </section>
 
       <section className="score-strip" aria-label="Key results">
-        <div className="mini-card">
+        <button type="button" className="mini-card tone-claims" onClick={() => setTab("claims")} title="Open ClaimCheck">
+          <span className="mini-icon"><Icon name="claims" size={18} /></span>
           <span className="mini-label">Claims supported</span>
           <strong>{supported}<small> / {claims.length}</small></strong>
           <span className="mini-detail">{partial} partial · {claims.length - supported - partial} insufficient</span>
-        </div>
-        <div className="mini-card">
+        </button>
+        <button type="button" className="mini-card tone-trl" onClick={() => setTab("trl")} title="Open the TRL ladder">
+          <span className="mini-icon"><Icon name="trl" size={18} /></span>
           <span className="mini-label">Technology readiness</span>
           <strong>TRL {trl.level ?? "—"}<small>/9</small></strong>
           <span className="mini-detail">{trl.label || "not assessed"}</span>
-        </div>
-        <div className="mini-card">
+        </button>
+        <button type="button" className="mini-card tone-repro" onClick={() => setTab("repro")} title="Open the reproducibility audit">
+          <span className="mini-icon"><Icon name="repro" size={18} /></span>
           <span className="mini-label">Reproducibility</span>
           <strong>{repro.score ?? "—"}<small>/100</small></strong>
           <span className="mini-detail">{repro.summary || "no audit"}</span>
-        </div>
-        <div className="mini-card">
+        </button>
+        <button type="button" className="mini-card tone-concepts" onClick={() => setTab("concepts")} title="Open key concepts">
+          <span className="mini-icon"><Icon name="concepts" size={18} /></span>
           <span className="mini-label">Entities extracted</span>
           <strong>{entities.length}</strong>
           <span className="mini-detail">{Object.keys(analysis.key_concepts || {}).length} concept groups</span>
-        </div>
+        </button>
       </section>
 
       <Warnings warnings={warnings} />
@@ -259,10 +262,12 @@ function Dashboard({ analysis, onReset }) {
           <button
             key={item.id}
             type="button"
-            className={`tab ${tab === item.id ? "active" : ""}`}
+            className={`tab tone-${item.tone} ${tab === item.id ? "active" : ""}`}
             onClick={() => setTab(item.id)}
             aria-selected={tab === item.id}
+            title={item.hint}
           >
+            <Icon name={item.icon} />
             {item.label}
             {badges[item.id] !== undefined && badges[item.id] !== null ? (
               <span className="tab-count">{badges[item.id]}</span>
@@ -271,7 +276,7 @@ function Dashboard({ analysis, onReset }) {
         ))}
       </nav>
 
-      <div className="tab-panel">
+      <div className="tab-panel" key={tab}>
         {tab === "overview" ? <OverviewTab analysis={analysis} /> : null}
         {tab === "concepts" ? <ConceptsTab analysis={analysis} /> : null}
         {tab === "claims" ? <ClaimCheckTab analysis={analysis} /> : null}
