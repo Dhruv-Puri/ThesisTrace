@@ -22,7 +22,7 @@ top (never the other way around).
 
 | # | Document | What it answers |
 |---|----------|-----------------|
-| 1 | [Progress.md](Progress.md) | Where are we right now? Weekly milestones, task status, blockers, demo checklist |
+| 1 | [Progress.md](Progress.md) | Where are we right now? Task status, the dated "what was built so far" changelog with a verified-layer table, blockers, demo checklist |
 | 2 | [Concepts-and-Syllabus.md](Concepts-and-Syllabus.md) | Which syllabus concept does each feature use? Full mapping to Units I–VI, CO1–CO6, and all 8 practicals |
 | 3 | [Feasibility-Analysis.md](Feasibility-Analysis.md) | Can a beginner–intermediate team build this in 3–4 weeks on weak PCs? Scope cuts, risks, costs |
 | 4 | [Architecture.md](Architecture.md) | System design: services, modules, data contracts, REST API, React tabs, Docker topology |
@@ -31,7 +31,6 @@ top (never the other way around).
 | 7 | [Evaluation.md](Evaluation.md) | Metrics, gold-standard set, error-analysis protocol (maps to Practical 6) |
 | 8 | [Build-Plan-Roadmap.md](Build-Plan-Roadmap.md) | The 4-week sprint plan with day-level tasks, roles, phase gates, future phases |
 | 9 | [Setup-and-Containerization.md](Setup-and-Containerization.md) | How to run everything with Docker (zero host installs) or a local `.venv` |
-| 10 | [Work-Done-So-Far.md](Work-Done-So-Far.md) | Dated changelog of everything built, verified and committed — with live screenshots |
 
 ## Repository map (target state)
 

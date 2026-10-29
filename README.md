@@ -29,7 +29,7 @@ prose over already-retrieved text.
 - TRL: the readiness rubric with the signals found (and explicitly not found)
 
 Full gallery: [documentation/screenshots/](documentation/screenshots/) ·
-What has been built so far: [documentation/Work-Done-So-Far.md](documentation/Work-Done-So-Far.md).
+What has been built so far (dated changelog): [documentation/Progress.md](documentation/Progress.md).
 
 ---
 
@@ -206,6 +206,5 @@ requirements.txt     Python dependencies (installed only in Docker / .venv)
 
 Start with [documentation/README.md](documentation/README.md); the architecture and
 pipeline specs are [documentation/Architecture.md](documentation/Architecture.md) and
-[documentation/NLP-Pipeline.md](documentation/NLP-Pipeline.md). A dated changelog of
-everything built so far lives in
-[documentation/Work-Done-So-Far.md](documentation/Work-Done-So-Far.md).
+[documentation/NLP-Pipeline.md](documentation/NLP-Pipeline.md). A dated changelog of everything built so far lives in the
+[documentation/Progress.md](documentation/Progress.md) status section.

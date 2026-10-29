@@ -12,7 +12,13 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Frontend
+# Frontend — package.json/lockfile stay tracked (needed to rebuild); everything
+# npm/vite regenerates below is ignored, so an npm-equipped teammate just clones + npm install.
 client/node_modules/
 client/dist/
+client/.vite/
+client/*.local
+
+# Ad-hoc screenshots saved at the repo root during testing. The showcase gallery
+# lives in documentation/screenshots/ and IS tracked in git.
 /screenshots/
