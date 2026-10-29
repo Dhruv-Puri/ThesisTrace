@@ -49,6 +49,36 @@ dependencies go in `client/node_modules` (inside the project). Use Python 3.11 o
 3.12 for this path (the Docker image pins 3.11); the container path avoids host
 version issues entirely.
 
+### Minimal quick start (what this repo currently runs here)
+
+A lightweight runtime that keeps the app fully working without the multi-GB NLP
+stack — the pipeline falls back to its built-in tiers automatically:
+
+```bash
+# 1) venv on any available 3.12 (Windows py-launcher or uv):
+py -V:3.12 -m venv .venv                    # or: uv venv --python 3.12 .venv
+export UV_CACHE_DIR="$PWD/.data/pip-cache"   # caches stay inside the project
+uv pip install --python .venv fastapi uvicorn python-multipart pydantic PyMuPDF
+
+# 2) API:
+.venv/Scripts/python.exe -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+
+# 3) Web UI (no Node on the machine? use a portable Node zip inside the project):
+mkdir -p .data/tools
+curl -sL -o .data/tools/node.zip \
+  https://nodejs.org/dist/v26.13.0/node-v26.13.0-win-x64.zip
+python -c "import zipfile; zipfile.ZipFile('.data/tools/node.zip').extractall('.data/tools')"
+export PATH="$PWD/.data/tools/node-v26.13.0-win-x64:$PATH"
+cd client && npm install --cache="$PWD/../.data/npm-cache" --no-audit --no-fund
+npm run dev                                  # http://127.0.0.1:5173, proxies /api
+```
+
+`UV_CACHE_DIR` / `npm --cache` keep every download cache inside `.data/`; the venv,
+portable Node and `node_modules` are all project-local. Nothing is installed globally,
+and deleting the project folder removes everything.
+
+### Full development stack
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
