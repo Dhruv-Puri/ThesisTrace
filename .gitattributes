@@ -1,0 +1,4 @@
+# Shell scripts run inside Linux containers: CRLF would break the shebang
+# (exec ...: no such file or directory). Git stores LF; this keeps the
+# working copy LF too, whatever core.autocrlf says on the host.
+*.sh text eol=lf

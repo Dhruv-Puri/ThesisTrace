@@ -81,7 +81,12 @@ _NUMBERED_RE = re.compile(r"^\d{1,2}(?:\.\d{1,2}){0,2}\.?\s+[A-Z][A-Za-z0-9 ,:&/
 
 _TITLE_SKIP = re.compile(
     r"(arxiv|doi|preprint|proceedings|conference|journal|volume|issue|issn|"
-    r"copyright|under review|submitted|accepted|published|www\.|https?://|@)",
+    r"copyright|under review|submitted|accepted|published|www\.|https?://|@|"
+    # Licence/attribution banners some publishers stamp above the real title,
+    # e.g. arXiv reprints of corporate blog posts: "Provided proper attribution
+    # is provided, Google hereby grants permission to reproduce the tables...".
+    r"hereby grants|permission to reproduce|all rights reserved|"
+    r"attribution is provided|licen[cs]e)",
     re.IGNORECASE,
 )
 
@@ -329,6 +334,11 @@ def guess_title(filename: str, pages: list[Page]) -> str:
             if not (5 <= len(candidate) <= 300):
                 continue
             if _TITLE_SKIP.search(candidate):
+                continue
+            # A wrapped banner/abstract continues in lower case; a title starts a
+            # new sentence. This is what rejects "scholarly works." after the
+            # banner above has been skipped.
+            if candidate[:1].islower():
                 continue
             if candidate.isdigit() or len(candidate.split()) < 2:
                 continue

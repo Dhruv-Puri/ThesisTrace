@@ -50,7 +50,7 @@ os.environ.setdefault("HF_HOME", str(DATA_DIR / "hf"))
 # ---------------------------------------------------------------------------
 NER_MODEL = "" if LOW_RAM else os.getenv(
     "P2R_NER_MODEL",
-    "dce/distilbert-base-uncased-finetuned-conll03-english",
+    "elastic/distilbert-base-uncased-finetuned-conll03-english",
 )
 NLI_MODEL = os.getenv(
     "P2R_NLI_MODEL",
