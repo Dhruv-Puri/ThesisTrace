@@ -18,7 +18,10 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
  && pip install --no-cache-dir -r requirements.txt
 
 # Small English model for sentence segmentation / POS / parsing (syllabus tier)
-RUN python -m spacy download en_core_web_sm
+# Install directly from the GitHub release wheel to avoid the spacy compatibility-JSON
+# fetch (which can fail with SSL errors in restricted build networks).
+RUN pip install --no-cache-dir \
+    "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
 
 # Non-root runtime user; the entrypoint fixes bind-mount ownership and drops to it.
 RUN useradd --create-home --shell /usr/sbin/nologin app \
