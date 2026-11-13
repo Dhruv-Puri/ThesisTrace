@@ -7,6 +7,7 @@ import OverviewTab from "./tabs/OverviewTab.jsx";
 import ReportTab from "./tabs/ReportTab.jsx";
 import ReproTab from "./tabs/ReproTab.jsx";
 import TRLTab from "./tabs/TRLTab.jsx";
+import ResearchGapsTab from "./tabs/ResearchGapsTab.jsx";
 import { formatNumber, Icon } from "./components/ui.jsx";
 
 const MAX_MB = 30;
@@ -16,6 +17,7 @@ const TABS = [
   { id: "concepts", label: "Key concepts", icon: "concepts", tone: "concepts", hint: "Datasets, models, metrics, organisations" },
   { id: "claims", label: "ClaimCheck", icon: "claims", tone: "claims", hint: "Claims checked against the paper's own evidence" },
   { id: "repro", label: "Reproducibility", icon: "repro", tone: "repro", hint: "12 signals: data, code, seeds, baselines" },
+  { id: "gaps", label: "Research gaps", icon: "repro", tone: "repro", hint: "Author-reported, methodological, and evidence gaps" },
   { id: "trl", label: "TRL", icon: "trl", tone: "trl", hint: "Technology readiness level 1–9, with evidence" },
   { id: "report", label: "Report", icon: "report", tone: "report", hint: "Cited executive report, downloadable" },
 ];
@@ -206,6 +208,7 @@ function Dashboard({ analysis, onReset }) {
     concepts: entities.length,
     claims: claims.length,
     repro: repro.score,
+    gaps: analysis.research_gaps?.total_gaps ?? 0,
     trl: trl.level,
   };
 
@@ -281,6 +284,7 @@ function Dashboard({ analysis, onReset }) {
         {tab === "concepts" ? <ConceptsTab analysis={analysis} /> : null}
         {tab === "claims" ? <ClaimCheckTab analysis={analysis} /> : null}
         {tab === "repro" ? <ReproTab analysis={analysis} /> : null}
+        {tab === "gaps" ? <ResearchGapsTab analysis={analysis} /> : null}
         {tab === "trl" ? <TRLTab analysis={analysis} /> : null}
         {tab === "report" ? <ReportTab analysis={analysis} /> : null}
       </div>
@@ -292,7 +296,6 @@ function Dashboard({ analysis, onReset }) {
     </main>
   );
 }
-
 export default function App() {
   const [phase, setPhase] = useState("idle");
   const [jobId, setJobId] = useState(null);

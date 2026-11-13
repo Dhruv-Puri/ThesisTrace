@@ -28,6 +28,7 @@ from . import (
     ner,
     report as report_stage,
     repro,
+    research_gaps as research_gaps_stage,
     stats as stats_stage,
     summarize as summarize_stage,
     tokenizer_study,
@@ -219,6 +220,14 @@ def analyze_document(
     t0 = time.perf_counter()
     reproducibility = repro.assess_reproducibility(document, entities, facts)
     timings["repro_ms"] = _elapsed(t0)
+        # --- Stage 10: research gap analysis ------------------------------------
+    t0 = time.perf_counter()
+    research_gaps = research_gaps_stage.analyze_research_gaps(
+        document,
+        verified_claims,
+        reproducibility,
+    )
+    timings["research_gaps_ms"] = _elapsed(t0)
     if progress:
         progress(90, "Reproducibility checklist")
 
@@ -264,6 +273,7 @@ def analyze_document(
         "key_concepts": key_concepts,
         "claims": verified_claims,
         "reproducibility": reproducibility,
+        "research_gaps": research_gaps,
         "trl": readiness,
         "key_terms": key_terms,
         "signals": facts,
@@ -299,6 +309,7 @@ def analyze_document(
         "key_concepts": key_concepts,
         "claims": verified_claims,
         "reproducibility": reproducibility,
+        "research_gaps": research_gaps,
         "trl": readiness,
         "report": executive_report,
         "tokenization": tokenization,
