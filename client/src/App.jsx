@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import MOCK_ANALYSIS from "./mocks/paperAnalysis.json";
 import { getConfig, getJob, uploadPaper } from "./api.js";
+import ChatTab, { useChat } from "./tabs/ChatTab.jsx";
 import ClaimCheckTab from "./tabs/ClaimCheckTab.jsx";
 import ConceptsTab from "./tabs/ConceptsTab.jsx";
 import OverviewTab from "./tabs/OverviewTab.jsx";
@@ -18,6 +19,7 @@ const TABS = [
   { id: "repro", label: "Reproducibility", icon: "repro", tone: "repro", hint: "12 signals: data, code, seeds, baselines" },
   { id: "trl", label: "TRL", icon: "trl", tone: "trl", hint: "Technology readiness level 1–9, with evidence" },
   { id: "report", label: "Report", icon: "report", tone: "report", hint: "Cited executive report, downloadable" },
+  { id: "chat", label: "Ask", icon: "chat", tone: "chat", hint: "Ask questions about the paper (needs a Gemini key)" },
 ];
 
 function validateFile(file) {
@@ -190,8 +192,9 @@ function Warnings({ warnings }) {
   );
 }
 
-function Dashboard({ analysis, onReset }) {
+function Dashboard({ analysis, onReset, geminiEnabled }) {
   const [tab, setTab] = useState("overview");
+  const chat = useChat(analysis.job_id);
   const claims = analysis.claims || [];
   const supported = claims.filter((claim) => claim.verdict === "supported").length;
   const partial = claims.filter((claim) => claim.verdict === "partially_supported").length;
@@ -283,6 +286,9 @@ function Dashboard({ analysis, onReset }) {
         {tab === "repro" ? <ReproTab analysis={analysis} /> : null}
         {tab === "trl" ? <TRLTab analysis={analysis} /> : null}
         {tab === "report" ? <ReportTab analysis={analysis} /> : null}
+        {tab === "chat" ? (
+          <ChatTab analysis={analysis} geminiEnabled={geminiEnabled} chat={chat} />
+        ) : null}
       </div>
 
       <footer className="dashboard-foot">
@@ -433,7 +439,11 @@ export default function App() {
       ) : null}
 
       {phase === "done" && analysis ? (
-        <Dashboard analysis={analysis} onReset={reset} />
+        <Dashboard
+          analysis={analysis}
+          onReset={reset}
+          geminiEnabled={config ? config.gemini_enabled : undefined}
+        />
       ) : null}
 
       <footer className="site-footer">

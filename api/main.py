@@ -6,6 +6,7 @@ Routes (documentation/Architecture.md section 4):
     POST /api/jobs                     multipart upload -> 202 + job id
     GET  /api/jobs/{job_id}            status/progress or full PaperAnalysis
     GET  /api/jobs/{job_id}/report     markdown executive report
+    POST /api/jobs/{job_id}/chat       grounded Q&A over the paper (needs Gemini)
 
 Uploads are written to the project-local data directory (or the Docker volume),
 never to a system path.  The only heavy work happens in the background job thread.
@@ -17,17 +18,19 @@ import logging
 import re
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import __version__
 from api.jobs import runner
-from api.pipeline import PIPELINE_VERSION, config, models
+from api.pipeline import PIPELINE_VERSION, chat, config, llm, models
 
 logger = logging.getLogger("paper2reality.api")
 
@@ -46,6 +49,16 @@ _STATUS_CODES = {
     415: "UNSUPPORTED_FILE",
     422: "VALIDATION_ERROR",
 }
+
+
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=4000)
+
+
+class ChatRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    history: list[ChatTurn] = Field(default_factory=list, max_length=40)
 
 
 def _error(code: str, message: str) -> dict:
@@ -271,3 +284,48 @@ async def job_report(job_id: str, format: str = "md"):
             "Content-Disposition": f'attachment; filename="{_safe_download_name(title)}"'
         },
     )
+
+
+@app.post("/api/jobs/{job_id}/chat")
+def job_chat(job_id: str, body: ChatRequest):
+    """Answer a question about the uploaded paper using Gemini over retrieved passages.
+
+    Declared ``def`` (not ``async def``) so the blocking Gemini call runs in FastAPI's
+    thread pool and never stalls the event loop.
+    """
+    if not llm.enabled():
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "CHAT_DISABLED", "message": chat.NO_KEY_MESSAGE},
+        )
+
+    job = runner.get_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+    source = runner.get_source(job_id)
+    if job["status"] == "error":
+        message = (job.get("error") or {}).get("message", "The analysis failed.")
+        raise HTTPException(status_code=409, detail={"code": "JOB_FAILED", "message": message})
+    if not source:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "The analysis is still running."},
+        )
+
+    path, filename = source
+    try:
+        return chat.answer(
+            job_id,
+            path,
+            filename,
+            body.question,
+            [turn.model_dump() for turn in body.history],
+        )
+    except chat.ChatError as exc:
+        raise HTTPException(
+            status_code=exc.status,
+            detail={"code": exc.code, "message": exc.message},
+        ) from exc
