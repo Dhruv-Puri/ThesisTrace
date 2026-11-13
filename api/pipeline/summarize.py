@@ -108,7 +108,7 @@ def _neural_bullets(source: str) -> tuple[str, list[str]]:
             result = pipe(
                 "summarize: " + clip(source, 2400),
                 max_new_tokens=130,
-                num_beams=4,
+                num_beams=1,
                 do_sample=False,
             )
             return result[0].get("generated_text", ""), warnings
@@ -123,7 +123,7 @@ def _neural_bullets(source: str) -> tuple[str, list[str]]:
                 clip(source, 2400),
                 max_length=160,
                 min_length=45,
-                num_beams=4,
+                num_beams=1,
                 do_sample=False,
                 truncation=True,
             )
@@ -137,7 +137,7 @@ def _neural_bullets(source: str) -> tuple[str, list[str]]:
             result = small(
                 "summarize: " + clip(source, 2200),
                 max_new_tokens=130,
-                num_beams=4,
+                num_beams=1,
                 do_sample=False,
             )
             warnings.append("DistilBART unavailable - FLAN-T5 produced the summary.")
@@ -227,7 +227,7 @@ def _explain_simple(abstract: str, warnings: list[str]) -> tuple[str, str]:
         return _plain_language(abstract), "extractive"
     template = prompts.render("eli5", abstract=clip(abstract, 1800))
     try:
-        result = pipe(template["user"], max_new_tokens=160, num_beams=4, do_sample=False)
+        result = pipe(template["user"], max_new_tokens=160, num_beams=1, do_sample=False)
         text = normalize_ws(result[0].get("generated_text", ""))
         if text:
             return clip(text, 900), "abstractive"
