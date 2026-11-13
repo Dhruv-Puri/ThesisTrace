@@ -44,6 +44,13 @@ const ICON_PATHS = {
       <path d="M10.5 16.5h5" />
     </>
   ),
+  chat: (
+    <>
+      <path d="M4 5.5h16v10.5H9.5L5.5 20v-4H4z" />
+      <path d="M8 9.5h8" />
+      <path d="M8 12.5h5" />
+    </>
+  ),
   upload: (
     <>
       <path d="M12 15.5V4.5" />

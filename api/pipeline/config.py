@@ -31,6 +31,8 @@ LLM_REPORT_ENABLED = _flag("P2R_LLM_REPORT", "0")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
 GEMINI_TIMEOUT = float(os.getenv("GEMINI_TIMEOUT", "8"))
+# Chat answers are longer than claim extraction, so they get a longer timeout.
+GEMINI_CHAT_TIMEOUT = float(os.getenv("GEMINI_CHAT_TIMEOUT", "30"))
 
 # ---------------------------------------------------------------------------
 # Storage - project-local by default, so deleting the folder removes everything

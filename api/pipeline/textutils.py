@@ -130,12 +130,6 @@ def numbers_in(text: str) -> list[str]:
         token = re.sub(r"(?<=\d),(?=\d{3}(?:\D|$))", "", token)
         values.append(token)
     return values
-
-
-def citation(page: int | str) -> str:
-    return f"[p.{int(page)}]"
-
-
 def citation_pages(text: str) -> list[int]:
     return [int(value) for value in _CITATION_RE.findall(text or "")]
 

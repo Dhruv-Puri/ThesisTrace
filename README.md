@@ -16,6 +16,11 @@ It is deliberately *not* a chat-with-your-PDF wrapper: the classical NLP pipelin
 the retrieval, the NLI cross-encoder assigns verdicts, and the optional LLM only writes
 prose over already-retrieved text.
 
+The **Ask** tab adds grounded Q&A on top of that same retrieval index: your question
+retrieves passages from the paper, only those passages go to Gemini, and answers carry
+`[p.N]` citations (any citation that does not match a retrieved page is stripped). Chat
+needs `GEMINI_API_KEY`; without one the tab says so instead of answering.
+
 ## Screenshots (captured from the running app)
 
 | | |
@@ -122,6 +127,7 @@ extractive summary, gazetteer NER, lexical evidence fallback, template report.
 | `POST` | `/api/jobs` | upload PDF/TXT/MD → `202` + `job_id` |
 | `GET` | `/api/jobs/{id}` | progress, then the full `PaperAnalysis` JSON |
 | `GET` | `/api/jobs/{id}/report?format=md` | downloadable markdown report |
+| `POST` | `/api/jobs/{id}/chat` | ask a question about the paper (needs Gemini; `503 CHAT_DISABLED` without a key) |
 
 Uploads are limited to 30 MB / 60 pages. One CPU-heavy analysis runs at a time; extra
 uploads queue. Progress is visible, which is the honest latency story (CO6).
@@ -191,6 +197,7 @@ Full mapping: [documentation/Concepts-and-Syllabus.md](documentation/Concepts-an
   removes everything this project created (Docker's own image cache is managed by Docker).
 - Uploaded papers are served only to the local API. No analytics, no external calls
   unless you set `GEMINI_API_KEY`.
+  With a key, the Ask tab sends your question and the few retrieved passages to Gemini, never the whole file.
 
 ## Repository map
 

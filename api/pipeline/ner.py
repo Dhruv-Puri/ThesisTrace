@@ -162,14 +162,3 @@ def extract_entities(document: Document, gaz_entities: list[dict]) -> tuple[list
     capped = merged[: config.MAX_ENTITIES]
     capped.sort(key=lambda item: (int(item["page"]), int(item["start"])))
     return capped, concepts, warnings
-
-
-def summarise_entity_types(entities: list[dict]) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for entity in entities:
-        counts[entity["type"]] = counts.get(entity["type"], 0) + 1
-    return dict(sorted(counts.items(), key=lambda item: -item[1]))
-
-
-def looks_like_entity(text: str) -> bool:
-    return bool(re.search(r"[A-Za-z]", text))
