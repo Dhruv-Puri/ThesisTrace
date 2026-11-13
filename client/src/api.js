@@ -38,3 +38,12 @@ export async function getConfig() {
 export function reportUrl(jobId) {
   return `/api/jobs/${encodeURIComponent(jobId)}/report?format=md`;
 }
+
+export async function askPaper(jobId, question, history = []) {
+  const response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}/chat`, {
+    method: "POST",
+    headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify({ question, history }),
+  });
+  return readJson(response);
+}

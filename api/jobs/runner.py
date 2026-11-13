@@ -174,6 +174,15 @@ def get_job(job_id: str) -> dict[str, Any] | None:
         return _public(job) if job else None
 
 
+def get_source(job_id: str) -> tuple[Path, str] | None:
+    """Stored upload path and filename for a finished job (used by the chat)."""
+    with _LOCK:
+        job = _JOBS.get(job_id)
+        if not job or job.status != "done":
+            return None
+        return job.path, job.filename
+
+
 def get_report(job_id: str) -> str | None:
     with _LOCK:
         job = _JOBS.get(job_id)
