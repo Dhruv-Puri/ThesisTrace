@@ -171,8 +171,3 @@ def key_concepts(entities: list[dict]) -> dict:
             for item in items[:12]
         ]
     return result
-
-
-def count_matches(entities: list[dict]) -> int:
-    """Occurrences, not distinct terms - used for technical-term density."""
-    return len(entities)

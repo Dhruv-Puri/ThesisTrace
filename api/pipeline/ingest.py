@@ -282,17 +282,6 @@ def conclusion_text(doc: Document) -> str:
     return clip(doc.full_text[-2400:], 1600)
 
 
-def introduction_text(doc: Document) -> str:
-    return find_section_text(doc, ["introduction", "background", "motivation"], 5000)
-
-
-def method_text(doc: Document) -> str:
-    text = find_section_text(
-        doc, ["method", "methods", "methodology", "approach", "proposed method"], 7000
-    )
-    return text or clip(doc.full_text, 7000)
-
-
 def results_text(doc: Document) -> str:
     text = find_section_text(
         doc, ["results", "experiments", "experiment", "evaluation", "analysis"], 7000

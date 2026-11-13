@@ -91,11 +91,3 @@ def model_status() -> dict:
             "eli5": config.ELI5_MODEL,
         },
     }
-
-
-def reset() -> None:
-    """Test helper - drop cached pipelines and errors."""
-    with _LOCK:
-        _PIPELINES.clear()
-        _LOADED.clear()
-        _ERRORS.clear()

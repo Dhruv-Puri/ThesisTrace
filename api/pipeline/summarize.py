@@ -16,7 +16,7 @@ from .. import prompts
 from . import config, models
 from .ingest import Document, abstract_text, conclusion_text
 from .textutils import (
-    clip, jaccard, normalize_ws, numbers_in, split_sentences, word_tokens,
+    clip, jaccard, normalize_ws, numbers_in, split_sentences,
 )
 
 _BAD_START = re.compile(r"^(?:summary|abstract|conclusion|in this paper|this paper)\s*[:\-]\s*", re.I)
@@ -234,7 +234,3 @@ def _explain_simple(abstract: str, warnings: list[str]) -> tuple[str, str]:
     except Exception as exc:
         warnings.append(f"ELI5 generation failed ({exc.__class__.__name__}); extractive explanation used.")
     return _plain_language(abstract), "extractive"
-
-
-def word_count(text: str) -> int:
-    return len(word_tokens(text))

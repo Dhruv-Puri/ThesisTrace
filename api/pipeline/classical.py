@@ -17,7 +17,7 @@ import re
 from collections import Counter
 
 from .ingest import Document
-from .textutils import STOPWORDS, clip, normalize_ws, word_tokens
+from .textutils import STOPWORDS, clip, normalize_ws
 
 _TOKEN_RE = re.compile(r"[a-z][a-z0-9'\-]{1,}")
 _LINK_RE = re.compile(r"https?://[^\s)\]>\"']+")
@@ -329,7 +329,3 @@ def pos_features(sentences: list[dict]) -> dict:
         "pron_ratio": round(counts["PRON"] / denominator, 3),
         "tokens": total,
     }
-
-
-def token_count(text: str) -> int:
-    return len(word_tokens(text))
