@@ -31,6 +31,10 @@ top (never the other way around).
 | 7 | [Evaluation.md](Evaluation.md) | Metrics, gold-standard set, error-analysis protocol (maps to Practical 6) |
 | 8 | [Build-Plan-Roadmap.md](Build-Plan-Roadmap.md) | The 4-week sprint plan with day-level tasks, roles, phase gates, future phases |
 | 9 | [Setup-and-Containerization.md](Setup-and-Containerization.md) | How to run everything with Docker (zero host installs) or a local `.venv` |
+| 10 | [Competitive-Analysis.md](Competitive-Analysis.md) | Who else is in this space (including PaperLens), where we win and lose, and how to defend the wedge |
+| 11 | [Business-Plan.md](Business-Plan.md) | Lean canvas, bottom-up sizing, pricing logic, unit economics, scenarios, kill criteria |
+| 12 | [Validation-Plan.md](Validation-Plan.md) | Interview kit, survey, three experiments with pass bars, pilot design, demo script |
+| 13 | [Production-Readiness.md](Production-Readiness.md) | Shipped vs gap, SLOs, security, runbook, deployment options, pilot checklist |
 
 ## Repository map (target state)
 
@@ -76,6 +80,8 @@ dashboard tabs and the landing page) and are embedded in the repository README.
 - [x] Phase A — NLP MVP **code** (Gate A needs a model-backed Docker run)
 - [x] Phase B — Evidence layer **code** (NLI path needs the Docker model cache)
 - [x] Phase C — App + Docker files (Gate C needs `docker compose up` on a clean machine)
+- [x] Differentiation pass — Trust Ledger, portfolio, UI rebuild, measured seed-set numbers
+- [x] Business documents and rebuilt pitch deck
 - [ ] Phase D — Evaluation run, error analysis, buffer, demo
 
 Track live status in [Progress.md](Progress.md).

@@ -15,13 +15,13 @@
 
 ## Where the project stands (verified on this checkout)
 
-Last updated: **2026-10-30** · branch `main` · latest commit `6bbad25`
+Last updated: **2026-11-14** · branch `main`
 
 | Layer | State | How it was verified |
 |---|---|---|
 | NLP pipeline (all 9 stages) | ✅ Code complete, runs **fully local** on CPU | Real 11-page student-project PDF analysed end-to-end via the live UI |
 | FastAPI backend + job runner | ✅ Running | `POST /api/jobs` → progress → result JSON served to the browser |
-| React dashboard (6 tabs) | ✅ Running, redesigned | Click-through in the browser: Overview → ClaimCheck → Reproducibility → TRL → Report |
+| React dashboard (4 tabs + portfolio) | ✅ Running, rebuilt | Click-through: Summary → Claims → Readiness → Report; Trust Ledger disclosure; sample portfolio |
 | Docker files | ✅ Written, committed | Structure reviewed; a full `docker compose up` cold start is still pending (Gate C) |
 | Test suite | ✅ Passing | stdlib `unittest`, no installs needed |
 | Documentation set | ✅ 10 documents in this folder | Indexed in [README.md](README.md) |
@@ -42,6 +42,20 @@ we designed, so it doubles as proof that graceful degradation works.
 | `eef815d` | **Frontend redesign** — annotated-paper theme, self-hosted fonts, highlighter intro animation, favicon, copy pass |
 | `4594500` | Inline SVG icon component used by tabs and cards (dependency of the redesign) |
 | `6bbad25` | Screenshot gallery + this changelog section; root-anchored gitignore screenshot rule |
+
+### 2026-11-14 — differentiation, audit trail, UI rebuild
+
+| Change | Detail |
+|---|---|
+| Trust Ledger | Every claim carries an `audit` receipt: retrieval k/scores/floor, NLI probabilities, thresholds, model, pipeline version, timestamp, abstain reason. `GET /api/jobs/{id}/audit` exports it. |
+| Portfolio | `api/pipeline/portfolio.py` compares 2–5 analyses: readiness table + near-duplicate claims scored in both directions as agree/conflict/unscored. `POST /api/portfolios`, `GET /api/portfolios/{id}`. |
+| Evaluation harness | `eval/run_eval.py` reports verdict accuracy, per-class P/R/F1, recall@k, citation coverage and latency with N. Seed set: 15 developer-labelled cases. |
+| UI rebuild | 7 tabs → 4; duplicated score cards removed; syllabus kickers moved out of the product; claims collapse to claim + verdict + page; receipts behind "Why this verdict?". |
+| Business documents | Competitive analysis (incl. PaperLens), business plan, validation plan, production readiness. |
+| Deck | Rebuilt: 15 core slides + 3 appendix, measured numbers with N, honest competitor row, team slide, demo script. |
+
+Still open: model-backed tier has not been timed; gold labels are a seed set; no auth/quota;
+interviews not yet conducted.
 
 ## What was built so far (by layer)
 
@@ -89,11 +103,13 @@ we designed, so it doubles as proof that graceful degradation works.
 ### Frontend — `client/`
 
 - React + Vite (18 / 5); only `recharts` beyond the React core.
-- Six tabs: **Overview, Key concepts, ClaimCheck, Reproducibility, TRL, Report**.
+- Four tabs: **Summary, Claims, Readiness, Report**, plus a **Portfolio** screen for 2–5 papers.
 - **Demo mode**: full sample `PaperAnalysis` fixture — the whole product is viewable
   without a backend ("nothing leaves your machine"), useful for teammates and demos.
-- Score-card → tab navigation, per-tab counters, CSR322 syllabus-link callouts in every
-  tab, styled loading/pending/empty states.
+- One verdict line in the header instead of four duplicate score cards; no tab counters;
+  syllabus links live in the report appendix, not the product.
+- Claims show claim + verdict + page; evidence and the Trust Ledger sit behind one
+  disclosure. Readiness merges the TRL ladder with the reproducibility gaps.
 - **Redesign** (`eef815d` — "Marginalia" theme): identity derived from the product —
   *a paper marked up with a pen and a highlighter*. Palette: desk paper `#f4f6f2`,
   white sheets, ink navy `#232f3b`, pen blue `#2d5d8f`, highlighter yellow used exactly
@@ -117,21 +133,21 @@ the project downloaded. An npm-equipped teammate needs nothing extra: clone → 
 
 ## Screenshot gallery (captured from the live app)
 
-### Landing page — highlighter intro, drop-zone, how-it-works
+### Start — one headline, one action
 
-![Landing](screenshots/landing.png)
+![Start](screenshots/ui-start.png)
 
-### Dashboard overview — score cards, pipeline notes, tab bar
+### Claims — verdicts, pages, reasons
 
-![Overview](screenshots/dashboard-overview.png)
+![Claims](screenshots/ui-claims.png)
 
-### ClaimCheck — verdict + retrieved passages with page citations
+### Trust Ledger — the receipt behind one verdict
 
-![ClaimCheck](screenshots/dashboard-claimcheck.png)
+![Receipt](screenshots/ui-receipt.png)
 
-### TRL — rubric signals, negation explanation, current level
+### Portfolio — readiness table and shared claims
 
-![TRL](screenshots/dashboard-trl.png)
+![Portfolio](screenshots/ui-portfolio.png)
 
 ---
 

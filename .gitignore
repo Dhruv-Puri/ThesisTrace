@@ -22,3 +22,5 @@ client/*.local
 # Ad-hoc screenshots saved at the repo root during testing. The showcase gallery
 # lives in documentation/screenshots/ and IS tracked in git.
 /screenshots/
+ThesisTrace_Pitch_Deck.pptx
+.cloud-attachments/

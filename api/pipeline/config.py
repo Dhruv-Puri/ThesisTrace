@@ -66,6 +66,8 @@ GEMINI_CHAT_TIMEOUT = float(os.getenv("GEMINI_CHAT_TIMEOUT", "30"))
 # ---------------------------------------------------------------------------
 DATA_DIR = Path(_env("DATA_DIR", str(ROOT / ".data"))).expanduser()
 UPLOAD_DIR = DATA_DIR / "uploads"
+PORTFOLIO_DIR = DATA_DIR / "portfolios"
+MAX_PORTFOLIO_PAPERS = 5
 MAX_UPLOAD_MB = int(_env("MAX_UPLOAD_MB", "30"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 MAX_PAGES = int(_env("MAX_PAGES", "60"))
@@ -136,6 +138,7 @@ CONTRADICTION_SCORE = 0.65
 def ensure_dirs() -> None:
     """Create the local data directories (the only writes the API itself makes)."""
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    PORTFOLIO_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def public_config() -> dict:

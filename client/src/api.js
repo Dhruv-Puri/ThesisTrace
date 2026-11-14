@@ -55,3 +55,26 @@ export async function deleteJob(jobId) {
   });
   return readJson(response);
 }
+
+export async function getAudit(jobId) {
+  const response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}/audit`, {
+    headers: JSON_HEADERS,
+  });
+  return readJson(response);
+}
+
+export async function createPortfolio(jobIds, name = "") {
+  const response = await fetch("/api/portfolios", {
+    method: "POST",
+    headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+    body: JSON.stringify({ job_ids: jobIds, name: name || null }),
+  });
+  return readJson(response);
+}
+
+export async function getPortfolio(portfolioId) {
+  const response = await fetch(`/api/portfolios/${encodeURIComponent(portfolioId)}`, {
+    headers: JSON_HEADERS,
+  });
+  return readJson(response);
+}

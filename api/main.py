@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import re
 import uuid
+from collections import Counter
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -33,7 +34,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from api import __version__
 from api.jobs import runner
 from api.jobs.store import QueueFull
-from api.pipeline import PIPELINE_VERSION, chat, config, llm, models
+from api.pipeline import PIPELINE_VERSION, chat, config, llm, models, portfolio
 
 logger = logging.getLogger("thesistrace.api")
 
@@ -63,6 +64,11 @@ class ChatTurn(BaseModel):
 class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     history: list[ChatTurn] = Field(default_factory=list, max_length=40)
+
+
+class PortfolioRequest(BaseModel):
+    job_ids: list[str] = Field(min_length=2, max_length=5)
+    name: str | None = Field(default=None, max_length=80)
 
 
 def _queue_full() -> HTTPException:
@@ -343,6 +349,127 @@ async def job_report(job_id: str, format: str = "md"):
             "Content-Disposition": f'attachment; filename="{_safe_download_name(title)}"'
         },
     )
+
+
+@app.get("/api/jobs/{job_id}/audit")
+async def job_audit(job_id: str):
+    """Machine-readable Trust Ledger: the receipt behind every verdict."""
+    job = runner.get_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+    if job["status"] == "error":
+        message = (job.get("error") or {}).get("message", "The analysis failed.")
+        raise HTTPException(status_code=409, detail={"code": "JOB_FAILED", "message": message})
+    if job["status"] != "done":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "The analysis is still running."},
+        )
+
+    claims = job.get("claims") or []
+    methods = Counter(
+        (claim.get("audit") or {}).get("method") or claim.get("source") or "unknown"
+        for claim in claims
+    )
+    doc = job.get("doc") or {}
+    return {
+        "job_id": job_id,
+        "status": "done",
+        "generated_at": job.get("updated_at") or job.get("created_at"),
+        "pipeline_version": job.get("pipeline_version") or PIPELINE_VERSION,
+        "doc": {
+            "filename": doc.get("filename"),
+            "title": doc.get("title"),
+            "pages": doc.get("pages"),
+        },
+        "summary": {
+            "claims": len(claims),
+            "supported": sum(1 for claim in claims if claim.get("verdict") == "supported"),
+            "partial": sum(
+                1 for claim in claims if claim.get("verdict") == "partially_supported"
+            ),
+            "insufficient": sum(
+                1 for claim in claims if claim.get("verdict") == "insufficient"
+            ),
+            "methods": dict(methods),
+        },
+        "claims": [
+            {
+                "id": claim.get("id"),
+                "text": claim.get("text"),
+                "page": claim.get("page"),
+                "verdict": claim.get("verdict"),
+                "confidence": claim.get("confidence"),
+                "source": claim.get("source"),
+                "audit": claim.get("audit"),
+            }
+            for claim in claims
+        ],
+    }
+
+
+@app.post("/api/portfolios", status_code=201)
+def create_portfolio(body: PortfolioRequest):
+    """Compare 2-5 finished analyses: readiness table + disagreement ledger."""
+    analyses: list[dict] = []
+    missing: list[str] = []
+    seen: set[str] = set()
+    for job_id in body.job_ids:
+        if job_id in seen:
+            continue
+        seen.add(job_id)
+        job = runner.get_job(job_id)
+        if not job:
+            missing.append(job_id)
+            continue
+        if job.get("status") != "done":
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "JOB_NOT_READY",
+                    "message": "Every paper in a portfolio must finish analysing first.",
+                },
+            )
+        analyses.append(job)
+
+    if missing:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "JOB_NOT_FOUND",
+                "message": "One of those analyses does not exist.",
+            },
+        )
+    if len(analyses) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "PORTFOLIO_TOO_SMALL",
+                "message": "Pick at least two different analyses.",
+            },
+        )
+
+    try:
+        return portfolio.create(analyses, name=body.name)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "PORTFOLIO_INVALID", "message": str(exc)},
+        ) from exc
+
+
+@app.get("/api/portfolios/{portfolio_id}")
+async def get_portfolio(portfolio_id: str):
+    result = portfolio.load(portfolio_id)
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "PORTFOLIO_NOT_FOUND", "message": "That portfolio does not exist."},
+        )
+    return result
 
 
 @app.post("/api/jobs/{job_id}/chat")

@@ -143,3 +143,27 @@ open licence, and reported adoption. Each is `available`, `promised` or absent.
 Known gaps: a repository link is stated, not verified (links may be dead); "reported adoption"
 is self-reported and is displayed but not used for the level; non-software technologies
 (hardware, medical) have no equivalent artifacts yet.
+
+
+## 10. Claim-verdict harness (implemented)
+
+```bash
+python eval/run_eval.py              # lexical fallback, no models needed
+python eval/run_eval.py --nli        # real cross-encoder (needs the model cache)
+python eval/run_eval.py --analyze    # also time the full pipeline per paper
+```
+
+The manifest is `eval/gold/claim_verdicts.json`. Each case records the claim, the sentence
+it came from (excluded from retrieval), the sentence that should support it, and the gold
+verdict. The harness prints per-case predictions, verdict accuracy, per-class P/R/F1,
+macro-F1, recall@1/3/5, citation coverage, verdict latency and full-paper timing — always
+with N.
+
+**Seed result on this checkout (lexical-fallback tier):** accuracy 0.667 (N=15), macro-F1
+0.618 (N=15), recall@5 1.000 (N=8), citation coverage 1.000 (N=9), mean pipeline time
+15.9 ms per paper (N=7).
+
+**What this is not:** the 15 labels were written by the developer, not by two independent
+raters; the NLI tier has not been run with models. Treat the numbers as a regression guard
+and a starting point. Expand to 50 pairs with two raters and report Cohen's kappa before
+quoting accuracy in the final report or the deck.

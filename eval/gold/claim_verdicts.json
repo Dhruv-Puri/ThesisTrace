@@ -1,0 +1,125 @@
+{
+  "note": "SEED SET. Fifteen claim-evidence cases across the existing corpus, labelled by the developer who wrote the rubric. This is a regression guard and a way to report honest numbers with N, not an inter-annotator agreement study. Before quoting accuracy in the final report, expand to 50 pairs labelled by two independent raters and report kappa. 'source' is the sentence the claim was taken from (excluded from retrieval); 'evidence' is the sentence that should support it, or null when the paper offers none.",
+  "cases": [
+    {
+      "id": "fraud-1",
+      "file": "eval/corpus/deployed_fraud_system.txt",
+      "claim": "The deployed system processes three million transactions every day.",
+      "source": "We present a fraud model.",
+      "evidence": "used in production for 3M transactions a day",
+      "gold": "supported"
+    },
+    {
+      "id": "fraud-2",
+      "file": "eval/corpus/deployed_fraud_system.txt",
+      "claim": "Our model outperforms the baseline.",
+      "source": "our model outperforms the baseline, which will be shown in Table 2.",
+      "evidence": null,
+      "gold": "partially_supported"
+    },
+    {
+      "id": "fraud-3",
+      "file": "eval/corpus/deployed_fraud_system.txt",
+      "claim": "The system scales to thirty million transactions per day.",
+      "source": "We present a fraud model.",
+      "evidence": null,
+      "gold": "insufficient"
+    },
+    {
+      "id": "robust-1",
+      "file": "eval/corpus/benchmark_only_certified_robustness.txt",
+      "claim": "The method reaches 61% certified accuracy.",
+      "source": "We propose a smoothing method that gives certified robustness for image classifiers.",
+      "evidence": "results show certified accuracy of 61%",
+      "gold": "supported"
+    },
+    {
+      "id": "robust-2",
+      "file": "eval/corpus/benchmark_only_certified_robustness.txt",
+      "claim": "The method is ready for production pipelines.",
+      "source": "The method can be deployed in production pipelines.",
+      "evidence": null,
+      "gold": "insufficient"
+    },
+    {
+      "id": "robust-3",
+      "file": "eval/corpus/benchmark_only_certified_robustness.txt",
+      "claim": "The method is evaluated on ImageNet and other real-world datasets.",
+      "source": "We propose a smoothing method that gives certified robustness for image classifiers.",
+      "evidence": "We evaluate on large-scale ImageNet and other real-world datasets.",
+      "gold": "supported"
+    },
+    {
+      "id": "hedged-1",
+      "file": "eval/corpus/hedged_future_deployment.txt",
+      "claim": "The model is deployed in production on smart speakers.",
+      "source": "We plan to deploy the model in production next year.",
+      "evidence": null,
+      "gold": "insufficient"
+    },
+    {
+      "id": "hedged-2",
+      "file": "eval/corpus/hedged_future_deployment.txt",
+      "claim": "The keyword spotting network beats the baseline on Speech Commands.",
+      "source": "We propose a compact keyword spotting network and evaluate it on a public benchmark.",
+      "evidence": "Our model outperforms the baseline by 3 points.",
+      "gold": "supported"
+    },
+    {
+      "id": "toolkit-1",
+      "file": "eval/corpus/released_toolkit.txt",
+      "claim": "The toolkit ships a Docker image and a REST API.",
+      "source": "We release a nowcasting toolkit and evaluate it on radar data.",
+      "evidence": "We provide a Docker image and a REST API.",
+      "gold": "supported"
+    },
+    {
+      "id": "toolkit-2",
+      "file": "eval/corpus/released_toolkit.txt",
+      "claim": "The toolkit includes a mobile application.",
+      "source": "We release a nowcasting toolkit and evaluate it on radar data.",
+      "evidence": null,
+      "gold": "insufficient"
+    },
+    {
+      "id": "theory-1",
+      "file": "eval/corpus/theory_only.txt",
+      "claim": "The paper proves an approximation bound for sparse routing networks.",
+      "source": "The problem of characterising sparse routing remains open.",
+      "evidence": "prove an approximation bound",
+      "gold": "supported"
+    },
+    {
+      "id": "theory-2",
+      "file": "eval/corpus/theory_only.txt",
+      "claim": "The method is validated on a large-scale benchmark.",
+      "source": "We study the expressive power of sparse routing networks and prove an approximation bound.",
+      "evidence": null,
+      "gold": "insufficient"
+    },
+    {
+      "id": "survey-1",
+      "file": "eval/corpus/survey_of_methods.txt",
+      "claim": "The survey reports that many methods outperform the baseline.",
+      "source": "This survey reviews the literature on translation models.",
+      "evidence": "report that many methods outperform it",
+      "gold": "supported"
+    },
+    {
+      "id": "soil-1",
+      "file": "eval/corpus/testbed_validation.txt",
+      "claim": "The controller was tested in greenhouse-like conditions.",
+      "source": "We develop a soil moisture controller and validate it on a test bed that reproduces greenhouse operating conditions.",
+      "evidence": "tested on a test bed that reproduces greenhouse conditions",
+      "gold": "supported"
+    },
+    {
+      "id": "soil-2",
+      "file": "eval/corpus/testbed_validation.txt",
+      "claim": "The controller cuts water use by 40% in field trials.",
+      "source": "We develop a soil moisture controller and validate it on a test bed that reproduces greenhouse operating conditions.",
+      "evidence": null,
+      "gold": "insufficient"
+    }
+  ]
+}

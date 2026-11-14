@@ -16,13 +16,86 @@ analysis (Stage 8), RAG grounding (CO5), hallucination evaluation (CO4).
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 
-from . import config, models
+from . import PIPELINE_VERSION, config, models
 from .classical import TfidfIndex
 from .textutils import detect_instruction_lines, numbers_in
 
 _SKIP_SECTION = re.compile(r"(reference|bibliograph|acknowledg|appendix)", re.I)
 _HEDGE = re.compile(r"\b(?:up to|may|might|can|could|potential(?:ly)?|approximately|about)\b", re.I)
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _thresholds() -> dict:
+    """The exact decision thresholds this verdict was produced with."""
+    return {
+        "supported_entailment": config.SUPPORTED_ENTAILMENT,
+        "supported_relevance": config.SUPPORTED_RELEVANCE,
+        "partial_entailment": config.PARTIAL_ENTAILMENT,
+        "partial_relevance": config.PARTIAL_RELEVANCE,
+        "contradiction": config.CONTRADICTION_SCORE,
+    }
+
+
+def _receipt(
+    *,
+    method: str,
+    verdict: str,
+    confidence: float,
+    candidates: list[dict],
+    ranked: list[dict] | None = None,
+    nli: dict | None = None,
+    abstain_reason: str = "",
+) -> dict:
+    """A machine-readable receipt behind one verdict (the Trust Ledger).
+
+    The receipt is what separates a citation from an auditable judgement: it stores
+    what was retrieved, which thresholds were applied, and whether a model was asked
+    at all.  It contains no document text, so it is safe to export.
+    """
+    ordered = ranked if ranked is not None else candidates
+    return {
+        "receipt_version": 1,
+        "pipeline_version": PIPELINE_VERSION,
+        "checked_at": _utc_now(),
+        "method": method,
+        "verdict": verdict,
+        "confidence": confidence,
+        "retrieval": {
+            "engine": "tf-idf",
+            "k": config.RETRIEVAL_K,
+            "floor": config.RETRIEVAL_FLOOR,
+            "returned": len(candidates),
+            "candidates": [
+                {
+                    "sentence_id": int(item["id"]),
+                    "page": int(item["page"]),
+                    "score": float(item["relevance"]),
+                }
+                for item in ordered[: config.RETRIEVAL_K]
+            ],
+        },
+        "nli": nli,
+        "abstained": bool(abstain_reason),
+        "reason": abstain_reason,
+    }
+
+
+def _nli_receipt(best: dict, entailment: float, contradiction: float) -> dict:
+    return {
+        "model": config.NLI_MODEL,
+        "max_candidates": config.NLI_MAX_CANDIDATES,
+        "thresholds": _thresholds(),
+        "best_sentence_id": int(best["id"]),
+        "best_relevance": float(best["relevance"]),
+        "entailment": round(float(entailment), 4),
+        "contradiction": round(float(contradiction), 4),
+        "margin": round(float(entailment) - float(contradiction), 4),
+    }
 
 
 class SentenceIndex:
@@ -225,6 +298,14 @@ def verify_claims(
                     ],
                     "note": note,
                     "source": "retrieval-only",
+                    "audit": _receipt(
+                        method="retrieval-only",
+                        verdict="insufficient",
+                        confidence=0.25,
+                        candidates=searched,
+                        ranked=searched,
+                        abstain_reason=note,
+                    ),
                 }
             )
             continue
@@ -257,6 +338,14 @@ def verify_claims(
                     "evidence": evidence,
                     "note": note,
                     "source": "lexical-fallback",
+                    "audit": _receipt(
+                        method="lexical-fallback",
+                        verdict=verdict,
+                        confidence=confidence,
+                        candidates=candidates,
+                        ranked=candidates[:3],
+                        abstain_reason="NLI model unavailable; conservative lexical-overlap fallback used.",
+                    ),
                 }
             )
             continue
@@ -299,6 +388,14 @@ def verify_claims(
                         "fallback classified this claim."
                     ),
                     "source": "lexical-fallback",
+                    "audit": _receipt(
+                        method="lexical-fallback",
+                        verdict=verdict,
+                        confidence=confidence,
+                        candidates=candidates,
+                        ranked=candidates[:3],
+                        abstain_reason="NLI labels could not be interpreted; lexical fallback used.",
+                    ),
                 }
             )
             continue
@@ -357,6 +454,15 @@ def verify_claims(
                 "evidence": evidence,
                 "note": note,
                 "source": "nli",
+                "audit": _receipt(
+                    method="nli",
+                    verdict=verdict,
+                    confidence=confidence,
+                    candidates=classified,
+                    ranked=classified,
+                    nli=_nli_receipt(best, entailment, contradiction),
+                    abstain_reason=note if verdict != "supported" else "",
+                ),
             }
         )
 

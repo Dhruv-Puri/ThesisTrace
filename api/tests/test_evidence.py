@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from api.pipeline.evidence import SentenceIndex, verify_claims
 from api.pipeline.ingest import build_sentence_index, ingest_text
+from api.pipeline import config
 
 
 class EvidenceTests(unittest.TestCase):
@@ -41,6 +42,13 @@ class EvidenceTests(unittest.TestCase):
             self.assertIn("relevance", item)
             self.assertIn("nli", item)
         self.assertEqual(result["source"], "lexical-fallback")
+        audit = result["audit"]
+        self.assertEqual(audit["method"], "lexical-fallback")
+        self.assertEqual(audit["receipt_version"], 1)
+        self.assertEqual(audit["retrieval"]["k"], config.RETRIEVAL_K)
+        self.assertTrue(audit["retrieval"]["candidates"])
+        self.assertTrue(audit["checked_at"])
+        self.assertIsNone(audit["nli"])
 
     def test_unrelated_claim_is_insufficient_not_false(self):
         claim = {
@@ -75,6 +83,11 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(verified[0]["verdict"], "supported")
         self.assertEqual(verified[0]["source"], "nli")
         self.assertEqual(verified[0]["evidence"][0]["nli"], "entailment")
+        audit = verified[0]["audit"]
+        self.assertEqual(audit["method"], "nli")
+        self.assertEqual(audit["nli"]["model"], config.NLI_MODEL)
+        self.assertIn("thresholds", audit["nli"])
+        self.assertGreaterEqual(audit["nli"]["entailment"], 0.9)
 
     def test_sentence_index_excludes_hostile_sentences(self):
         doc = ingest_text(

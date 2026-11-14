@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MarkdownLite from "../components/MarkdownLite.jsx";
-import { Tag } from "../components/ui.jsx";
+import { Icon } from "../components/ui.jsx";
 
 function downloadBlob(markdown, filename) {
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
@@ -25,7 +25,7 @@ export default function ReportTab({ analysis }) {
     try {
       await navigator.clipboard.writeText(markdown);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      window.setTimeout(() => setCopied(false), 1600);
     } catch {
       setCopied(false);
     }
@@ -46,39 +46,28 @@ export default function ReportTab({ analysis }) {
   }
 
   if (!markdown) {
-    return <p className="fine-print">The report is not available for this analysis.</p>;
+    return <p className="muted">The report is not available for this analysis.</p>;
   }
 
   return (
-    <div className="tab-stack">
-      <div className="report-actions">
+    <div className="stack">
+      <div className="block-head">
         <div>
-          <p className="kicker">Deterministic template + optional grounded polish</p>
           <h2>Executive report</h2>
+          <p className="muted">Every evidence bullet cites a page.</p>
         </div>
         <div className="button-row">
-          <button type="button" className="button secondary" onClick={copyReport}>
-            {copied ? "Copied" : "Copy markdown"}
+          <button type="button" className="button quiet" onClick={copyReport}>
+            {copied ? "Copied" : "Copy"}
           </button>
-          <button type="button" className="button primary" onClick={downloadReport}>
-            Download .md
+          <button type="button" className="button" onClick={downloadReport}>
+            <Icon name="download" size={15} /> Download .md
           </button>
         </div>
       </div>
-
-      <article className="panel report-panel">
-        <div className="report-banner">
-          <Tag tone="accent">evidence bullets cite a page</Tag>
-          <Tag tone="neutral">{isDemo ? "demo fixture" : "live analysis"}</Tag>
-        </div>
+      <article className="report">
         <MarkdownLite text={markdown} />
       </article>
-
-      <p className="syllabus-note">
-        <span>CSR322 link</span> Natural language generation and grounded generation (CO5):
-        only retrieved text reaches the report, and any sentence without a valid citation is
-        dropped by a mechanical check.
-      </p>
     </div>
   );
 }

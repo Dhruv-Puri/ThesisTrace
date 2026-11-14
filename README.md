@@ -1,17 +1,19 @@
 # ThesisTrace
 
-> Formerly named *Paper2Reality*. Repository: <https://github.com/Dhruv-Puri/ThesisTrace>.
-
-**From a research paper to evidence, readiness, and a real-world roadmap.**
+**PaperLens tells you what the literature says. ThesisTrace tells you whether to build on it.**
 
 A CSR322 (Natural Language Processing) course project. Upload a paper, patent-style
 report, or technical note and get:
 
 - a 3-bullet summary and a beginner explanation;
-- typed key concepts (datasets, models, metrics, people, organisations);
-- **ClaimCheck** — every major claim checked against the paper's own retrieved evidence;
+- typed key concepts, folded into the summary;
+- **Claims** — every major claim checked against the paper's own retrieved evidence;
+- a **Trust Ledger** — the retrieval score, NLI probabilities, thresholds, model and
+  pipeline version behind every verdict, exportable as JSON;
 - a **reproducibility audit** with 12 cited signals;
 - a **TRL 1–9** readiness level with quoted evidence;
+- a **portfolio** that compares 2–5 papers on readiness and flags the same claim when two
+  papers disagree;
 - an **executive report** whose evidence bullets carry a `[p.N]` citation.
 
 It is deliberately *not* a chat-with-your-PDF wrapper: the classical NLP pipeline does
@@ -27,13 +29,13 @@ needs `GEMINI_API_KEY`; without one the tab says so instead of answering.
 
 | | |
 |---|---|
-| ![Landing page](documentation/screenshots/landing.png) | ![Dashboard overview](documentation/screenshots/dashboard-overview.png) |
-| ![ClaimCheck](documentation/screenshots/dashboard-claimcheck.png) | ![TRL readiness](documentation/screenshots/dashboard-trl.png) |
+| ![Start](documentation/screenshots/ui-start.png) | ![Claims](documentation/screenshots/ui-claims.png) |
+| ![Trust Ledger](documentation/screenshots/ui-receipt.png) | ![Portfolio](documentation/screenshots/ui-portfolio.png) |
 
-- Landing page with the highlighter intro and upload/demo entry points
-- Dashboard: score cards, pipeline-note transparency, tab bar with counters
-- ClaimCheck: a claim's verdict with the exact retrieved passages and page citations
-- TRL: the readiness rubric with the signals found (and explicitly not found)
+- Start: one action, one sentence
+- Claims: verdict, page, and one line of reasoning
+- Trust Ledger: retrieval score, NLI probabilities, thresholds, model and pipeline version
+- Portfolio: readiness table plus shared claims scored in both directions
 
 Full gallery: [documentation/screenshots/](documentation/screenshots/) ·
 What has been built so far (dated changelog): [documentation/Progress.md](documentation/Progress.md).
@@ -87,8 +89,7 @@ uv pip install --python .venv fastapi uvicorn python-multipart pydantic PyMuPDF
 
 # 3) Web UI (no Node on the machine? use a portable Node zip inside the project):
 mkdir -p .data/tools
-curl -sL -o .data/tools/node.zip \
-  https://nodejs.org/dist/v26.13.0/node-v26.13.0-win-x64.zip
+# put a portable Node win-x64 zip at .data/tools/node.zip (any current Node 22+ build)
 python -c "import zipfile; zipfile.ZipFile('.data/tools/node.zip').extractall('.data/tools')"
 export PATH="$PWD/.data/tools/node-v26.13.0-win-x64:$PATH"
 cd client && npm install --cache="$PWD/../.data/npm-cache" --no-audit --no-fund
@@ -129,7 +130,10 @@ extractive summary, gazetteer NER, lexical evidence fallback, template report.
 | `POST` | `/api/jobs` | upload PDF/TXT/MD → `202` + `job_id` |
 | `GET` | `/api/jobs/{id}` | progress, then the full `PaperAnalysis` JSON |
 | `GET` | `/api/jobs/{id}/report?format=md` | downloadable markdown report |
+| `GET` | `/api/jobs/{id}/audit` | Trust Ledger: receipt behind every claim verdict |
 | `POST` | `/api/jobs/{id}/chat` | ask a question about the paper (needs Gemini; `503 CHAT_DISABLED` without a key) |
+| `POST` | `/api/portfolios` | compare 2–5 finished analyses: readiness + disagreement ledger |
+| `GET` | `/api/portfolios/{id}` | reopen a saved portfolio |
 
 Uploads are limited to 30 MB / 60 pages. One CPU-heavy analysis runs at a time; extra
 uploads queue. Progress is visible, which is the honest latency story (CO6).
@@ -170,6 +174,27 @@ checks, NLI-free evidence fallback, reproducibility, TRL negation/review caps, r
 citation enforcement, prompt-injection handling, job lifecycle, and the full JSON
 contract. Model-backed checks run inside Docker.
 
+## Evaluation
+
+```bash
+python eval/run_eval.py --analyze
+```
+
+Prints verdict accuracy, per-class precision/recall/F1, retrieval recall@k, citation
+coverage, per-case verdict latency and full-paper timing, always with N. The shipped gold
+set is a 15-case developer-labelled seed set; see [documentation/Evaluation.md](documentation/Evaluation.md).
+
+## Business and product documents
+
+- [Competitive analysis](documentation/Competitive-Analysis.md) — PaperLens and incumbents,
+  honest matrix, positioning map, win/loss scenarios.
+- [Business plan](documentation/Business-Plan.md) — lean canvas, bottom-up sizing, unit
+  economics, scenarios, kill criteria.
+- [Validation plan](documentation/Validation-Plan.md) — interview kit, survey, three
+  experiments with pass bars, pilot design.
+- [Production readiness](documentation/Production-Readiness.md) — shipped vs gap, SLOs,
+  security, runbook, pilot checklist.
+
 ## Syllabus alignment (CSR322)
 
 | Syllabus area | Where it lives |
@@ -205,7 +230,7 @@ Full mapping: [documentation/Concepts-and-Syllabus.md](documentation/Concepts-an
 
 ```
 api/                 FastAPI app, job runner, NLP pipeline, prompt templates, tests
-client/              React + Vite dashboard (6 tabs, demo fixture)
+client/              React + Vite dashboard (4 tabs + portfolio, demo fixture)
 documentation/       design docs, syllabus mapping, feasibility, roadmap, setup
 Dockerfile.api       CPU-only API + model image
 Dockerfile.web       Vite build served by nginx

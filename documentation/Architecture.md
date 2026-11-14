@@ -144,6 +144,9 @@ thresholds (this last one must still explain *what was searched*).
 | `GET /api/jobs/{id}` | poll status/result | `PaperAnalysis` (above) with `status`; queued jobs add `queue_ahead` |
 | `DELETE /api/jobs/{id}` | delete the analysis and its uploaded file | `{"status":"deleted"}`; `409 JOB_ACTIVE` while running |
 | `GET /api/jobs/{id}/report?format=md` | downloadable executive report | markdown |
+| `GET /api/jobs/{id}/audit` | Trust Ledger receipt for every claim | JSON with retrieval scores, NLI probabilities, thresholds, model and pipeline version |
+| `POST /api/portfolios` | compare 2–5 finished analyses | readiness table + shared-claim ledger; `201` |
+| `GET /api/portfolios/{id}` | reopen a saved portfolio | the stored comparison |
 | `GET /api/config` | feature flags to the UI | `{"gemini_enabled":false,"low_ram":false}` |
 
 Errors: `{"status":"error","error":{"code":"UNSUPPORTED_FILE","message":"..."}}`.
@@ -155,23 +158,21 @@ worker by default — honest about CO6: a laptop CPU cannot run two summarizers 
 
 ```
 client/src/
-├── App.jsx              upload → job polling → dashboard shell with tabs
-├── api.js               fetch wrappers for the 5 endpoints above
+├── App.jsx              start → job polling → analysis shell / portfolio
+├── api.js               fetch wrappers for the API above
 ├── styles.css           design system (no UI framework dependency)
-├── components/          StatCard, VerdictPill, MarkdownLite, etc.
-├── mocks/paperAnalysis.json   the SAME shape as section 3 (demo mode)
+├── components/          ui primitives, PortfolioScreen
+├── mocks/               demo analysis + sample portfolio
 └── tabs/
-    ├── OverviewTab.jsx      stats cards + 3 bullets + ELI5 toggle
-    ├── ConceptsTab.jsx      entity chips grouped by type + key concepts
-    ├── ClaimCheckTab.jsx    claim cards: verdict pill, evidence, citation, confidence
-    ├── ReproTab.jsx         checklist table + score gauge
-    ├── TRLTab.jsx           TRL 1–9 ladder with current level + cited signals
-    └── ReportTab.jsx        executive report + download button
+    ├── SummaryTab.jsx       3 bullets, ELI5 toggle, collapsed key concepts
+    ├── ClaimsTab.jsx        claim rows + "Why this verdict?" receipt + audit export
+    ├── ReadinessTab.jsx     TRL ladder + reproducibility gaps in one column
+    ├── ReportTab.jsx        executive report + copy/download
+    └── ChatSheet.jsx        optional grounded Q&A drawer (needs a Gemini key)
 ```
 
-Tabs are dumb renderers of one JSON object — this is deliberately repetitive so any
-member can clone a tab in an hour. Job flow: upload → poll `GET /api/jobs/{id}` every
-1.5 s → render when `done`.
+Four tabs render one JSON object. Start, analysis and portfolio are the only screens.
+Job flow: upload → poll `GET /api/jobs/{id}` every 1.5 s → render when `done`.
 
 ## 6. Tech stack
 

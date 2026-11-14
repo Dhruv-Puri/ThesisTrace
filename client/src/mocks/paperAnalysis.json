@@ -302,7 +302,56 @@
         }
       ],
       "note": "",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "supported",
+        "confidence": 0.91,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 2,
+          "candidates": [
+            {
+              "sentence_id": 148,
+              "page": 6,
+              "score": 0.87
+            },
+            {
+              "sentence_id": 171,
+              "page": 7,
+              "score": 0.61
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 148,
+          "best_relevance": 0.87,
+          "entailment": 0.94,
+          "contradiction": 0.02,
+          "margin": 0.92,
+          "scores": {
+            "entailment": 0.94,
+            "neutral": 0.04,
+            "contradiction": 0.02
+          }
+        },
+        "abstained": false,
+        "reason": ""
+      }
     },
     {
       "id": "c2",
@@ -325,7 +374,51 @@
         }
       ],
       "note": "",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "supported",
+        "confidence": 0.86,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 1,
+          "candidates": [
+            {
+              "sentence_id": 164,
+              "page": 7,
+              "score": 0.83
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 164,
+          "best_relevance": 0.83,
+          "entailment": 0.9,
+          "contradiction": 0.02,
+          "margin": 0.88,
+          "scores": {
+            "entailment": 0.9,
+            "neutral": 0.08,
+            "contradiction": 0.02
+          }
+        },
+        "abstained": false,
+        "reason": ""
+      }
     },
     {
       "id": "c3",
@@ -348,7 +441,51 @@
         }
       ],
       "note": "The evidence reports 57% on one GPU, not “up to 60%” in data-centre conditions. The scope is wider than the measurement [p.8].",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "partially_supported",
+        "confidence": 0.64,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 1,
+          "candidates": [
+            {
+              "sentence_id": 212,
+              "page": 8,
+              "score": 0.55
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 212,
+          "best_relevance": 0.55,
+          "entailment": 0.46,
+          "contradiction": 0.05,
+          "margin": 0.41,
+          "scores": {
+            "entailment": 0.46,
+            "neutral": 0.49,
+            "contradiction": 0.05
+          }
+        },
+        "abstained": true,
+        "reason": "The evidence reports 57% on one GPU, not “up to 60%” in data-centre conditions. The scope is wider than the measurement [p.8]."
+      }
     },
     {
       "id": "c4",
@@ -371,7 +508,51 @@
         }
       ],
       "note": "The paper explicitly limits evaluation to two high-resource pairs, so the generalization claim is unverified rather than false [p.8].",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "insufficient",
+        "confidence": 0.3,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 1,
+          "candidates": [
+            {
+              "sentence_id": 220,
+              "page": 8,
+              "score": 0.42
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 220,
+          "best_relevance": 0.42,
+          "entailment": 0.08,
+          "contradiction": 0.03,
+          "margin": 0.05,
+          "scores": {
+            "entailment": 0.08,
+            "neutral": 0.89,
+            "contradiction": 0.03
+          }
+        },
+        "abstained": true,
+        "reason": "The paper explicitly limits evaluation to two high-resource pairs, so the generalization claim is unverified rather than false [p.8]."
+      }
     },
     {
       "id": "c5",
@@ -394,7 +575,51 @@
         }
       ],
       "note": "The measured overhead is still 2.8–4.1%, which is not “negligible”; the claim overstates the result [p.7].",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "partially_supported",
+        "confidence": 0.58,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 1,
+          "candidates": [
+            {
+              "sentence_id": 177,
+              "page": 7,
+              "score": 0.69
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 177,
+          "best_relevance": 0.69,
+          "entailment": 0.46,
+          "contradiction": 0.05,
+          "margin": 0.41,
+          "scores": {
+            "entailment": 0.46,
+            "neutral": 0.49,
+            "contradiction": 0.05
+          }
+        },
+        "abstained": true,
+        "reason": "The measured overhead is still 2.8–4.1%, which is not “negligible”; the claim overstates the result [p.7]."
+      }
     },
     {
       "id": "c6",
@@ -417,7 +642,51 @@
         }
       ],
       "note": "The sentence itself says deployment is future work. No operational evidence was found [p.9].",
-      "source": "nli"
+      "source": "nli",
+      "audit": {
+        "receipt_version": 1,
+        "pipeline_version": "0.2.0",
+        "checked_at": "2026-11-14T09:00:00+00:00",
+        "method": "nli",
+        "verdict": "insufficient",
+        "confidence": 0.26,
+        "retrieval": {
+          "engine": "tf-idf",
+          "k": 5,
+          "floor": 0.05,
+          "returned": 1,
+          "candidates": [
+            {
+              "sentence_id": 250,
+              "page": 9,
+              "score": 0.31
+            }
+          ]
+        },
+        "nli": {
+          "model": "cross-encoder/nli-deberta-v3-small",
+          "max_candidates": 3,
+          "thresholds": {
+            "supported_entailment": 0.6,
+            "supported_relevance": 0.25,
+            "partial_entailment": 0.4,
+            "partial_relevance": 0.12,
+            "contradiction": 0.65
+          },
+          "best_sentence_id": 250,
+          "best_relevance": 0.31,
+          "entailment": 0.08,
+          "contradiction": 0.03,
+          "margin": 0.05,
+          "scores": {
+            "entailment": 0.08,
+            "neutral": 0.89,
+            "contradiction": 0.03
+          }
+        },
+        "abstained": true,
+        "reason": "The sentence itself says deployment is future work. No operational evidence was found [p.9]."
+      }
     }
   ],
   "reproducibility": {
@@ -439,7 +708,7 @@
         "weight": 2,
         "status": "yes",
         "points": 1.0,
-        "evidence": "p.5 - “Code: https://github.com/example/sparseroute.”"
+        "evidence": "p.5 - “Code: example/sparseroute repository.”"
       },
       {
         "key": "model_details",
@@ -732,11 +1001,11 @@
     ],
     "links": [
       {
-        "url": "https://github.com/example/sparseroute",
+        "url": "example/sparseroute",
         "page": 5
       },
       {
-        "url": "https://huggingface.co/datasets/wmt14",
+        "url": "example/wmt14 dataset page",
         "page": 5
       }
     ]
