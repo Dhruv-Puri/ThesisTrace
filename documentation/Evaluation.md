@@ -117,3 +117,29 @@ rules*, so 100 % agreement on them is a regression guard, not an accuracy estima
 number needs 15-30 papers labelled by two independent raters, reported with N, exact, within-1
 and MAE (`python eval/run_trl_eval.py`). The NLI path is covered by unit tests with a fake
 scorer; run `--nli` inside Docker to measure it with the real model.
+
+
+## 9. Software-readiness artifacts as TRL evidence
+
+Implementation: `api/pipeline/artifacts.py` (shared scoping helpers in `api/pipeline/scope.py`).
+
+The detector reads what the paper *states* it ships (it never fetches links or runs code) and
+classifies ten artifact types with a page citation: released source, installable package,
+container image, API/SDK/service, live demo, versioned release, tests/CI, documentation,
+open licence, and reported adoption. Each is `available`, `promised` or absent.
+
+* Only statements about the authors' own system count. Links in references or related work,
+  third-party code ("we build on ... github.com/..."), citations ("Smith et al. [12]") and
+  negated sentences are rejected. Title-block and footnote links on page 1 are read, because
+  section detection drops text before the first heading.
+* `promised` artifacts ("will be released upon acceptance", "on request") never count; they
+  appear as a near miss and widen the plausible range by one level.
+* `level_hint` is a conservative software-TRL heuristic: released source + an installable or
+  hosted form + at least three artifact types -> TRL 5; plus a hosted/API form, an installable
+  form and four types -> TRL 6. Artifacts never reach TRL 7+ on their own (that needs
+  deployment evidence) and are ignored when the paper has no experimental evaluation.
+* TRL evidence pages are now the page the sentence is on, not the page its section starts on.
+
+Known gaps: a repository link is stated, not verified (links may be dead); "reported adoption"
+is self-reported and is displayed but not used for the level; non-software technologies
+(hardware, medical) have no equivalent artifacts yet.

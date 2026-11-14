@@ -38,7 +38,12 @@ from __future__ import annotations
 import re
 from typing import Callable
 
-from .ingest import Document, Section, abstract_text, norm_heading
+from .artifacts import collect_artifacts
+from .ingest import Document, Section, abstract_text
+from .scope import (
+    CORE_ROLES, HEDGE, NEG, CITES_OTHERS, OWN, ROLE_WEIGHT, PageLocator,
+    role_for_heading, window_after, window_before,
+)
 from .textutils import normalize_ws, split_sentences
 
 LABELS = {
@@ -54,49 +59,14 @@ LABELS = {
 }
 
 # --------------------------------------------------------------------------- #
-# Section roles
+# Section roles (shared with artifacts.py via scope.py)
 # --------------------------------------------------------------------------- #
 
-# Order matters: the first matching rule wins.
-_ROLE_RULES: list[tuple[str, re.Pattern[str]]] = [
-    ("excluded", re.compile(
-        r"\b(?:references?|bibliograph\w*|acknowledg\w*|funding|author contributions?|"
-        r"conflicts? of interest|declarations?|ethics)\b")),
-    ("related", re.compile(r"\b(?:related work|related studies|prior work|previous work|literature review)\b")),
-    ("conclusion", re.compile(r"\b(?:conclusions?|concluding|summary)\b")),
-    ("future", re.compile(r"\b(?:future work|limitations?|threats to validity)\b")),
-    ("discussion", re.compile(r"\bdiscussion\b")),
-    ("abstract", re.compile(r"\babstract\b")),
-    ("intro", re.compile(r"\b(?:introduction|background|motivation|problem (?:statement|definition))\b")),
-    ("results", re.compile(
-        r"\b(?:results?|experiments?|experimental|evaluation|analysis|deployment|case stud\w+|"
-        r"pilot|field|user stud\w+|performance|findings|ablations?|benchmarks?)\b")),
-    ("method", re.compile(
-        r"\b(?:methods?|methodology|approach|design|architecture|implementation|system|model|"
-        r"framework|materials|setup)\b")),
-]
-
-_ROLE_WEIGHT = {
-    "results": 1.0, "method": 0.9, "abstract": 0.8, "discussion": 0.7,
-    "other": 0.65, "conclusion": 0.6, "intro": 0.5,
-    "future": 0.0, "related": 0.0, "excluded": 0.0,
-}
-_CORE_ROLES = {"abstract", "intro", "method", "results", "discussion", "conclusion"}
-
-
-def _role(heading: str) -> str:
-    name = norm_heading(heading or "")
-    for role, pattern in _ROLE_RULES:
-        if pattern.search(name):
-            return role
-    return "other"
-
-
 def _classified(doc: Document) -> tuple[list[tuple[Section, str]], bool]:
-    rows = [(section, _role(section.heading)) for section in doc.sections]
+    rows = [(section, role_for_heading(section.heading)) for section in doc.sections]
     if not rows:
         rows = [(Section(heading="", text=doc.full_text, page=1), "other")]
-    recognised = sum(1 for _, role in rows if role in _CORE_ROLES) >= 2
+    recognised = sum(1 for _, role in rows if role in CORE_ROLES) >= 2
     return rows, recognised
 
 
@@ -227,63 +197,24 @@ _NLI_MIN_ENTAILMENT = 0.5
 # Scoped negation / hedging / attribution
 # --------------------------------------------------------------------------- #
 
-_NEG = re.compile(
-    r"\b(?:no|not|never|without|neither|nor|none|lacks?|lacking|lacked|absence of|yet to|"
-    r"unable to|cannot|fails? to|failed to|rather than|instead of)\b|n't\b",
-    re.IGNORECASE,
-)
-_HEDGE = re.compile(
-    r"\b(?:will|would|could|can|may|might|should|shall|plans?|planned|planning|intend(?:s|ed)?|"
-    r"aims? to|aimed to|hopes? to|expects? to|expected to|future|potential(?:ly)?|possibl[ey]|"
-    r"envision\w*|ideally|if|whether|suitable for|ready for|designed for|enabl\w+)\b",
-    re.IGNORECASE,
-)
-_CITES_OTHERS = re.compile(
-    r"\[\s*\d[\d,\s\u2013-]*\]|\bet al\b|\(\s*[A-Z][A-Za-z-]+(?: et al\.?)?,?\s*(?:19|20)\d{2}\s*\)|"
-    r"\b(?:prior|previous|existing|related|earlier|other) (?:work|systems?|studies|approaches|methods)\b|"
-    r"\b(?:they|their) (?:deployed|tested|ran|conducted)\b",
-    re.IGNORECASE,
-)
-_OWN = re.compile(
-    r"\b(?:we|our|ours|us)\b|"
-    r"\b(?:this|the proposed|the presented|the developed|the) "
-    r"(?:system|model|method|approach|tool|framework|prototype|pipeline|platform|device|algorithm|"
-    r"solution|study|trial|deployment|work)\b|"
-    r"\b(?:was|were|has been|have been|is|are) (?:successfully |also |then |later )?"
-    r"(?:deployed|piloted|tested|evaluated|validated|trialled|trialed|installed|used|running|certified|"
-    r"approved|rolled out|qualified)\b",
-    re.IGNORECASE,
-)
-_CLAUSE_BREAK_BEFORE = re.compile(r"[;:,()]|\b(?:but|however|whereas|while|although|though|and)\b", re.IGNORECASE)
-_CLAUSE_BREAK_AFTER = re.compile(r"[;:,()]|\b(?:but|however|whereas|while|although|though)\b", re.IGNORECASE)
-
-
-def _window_before(sentence: str, start: int) -> str:
-    clause = _CLAUSE_BREAK_BEFORE.split(sentence[:start])[-1]
-    return " ".join(clause.split()[-7:])
-
-
-def _window_after(sentence: str, end: int) -> str:
-    clause = _CLAUSE_BREAK_AFTER.split(sentence[end:])[0]
-    return " ".join(clause.split()[:5])
-
-
 def _reject_reason(sentence: str, match: re.Match[str], env: bool) -> str | None:
-    before = _window_before(sentence, match.start())
-    after = _window_after(sentence, match.end())
-    if _NEG.search(before) or _NEG.search(after):
+    before = window_before(sentence, match.start())
+    after = window_after(sentence, match.end())
+    if NEG.search(before) or NEG.search(after):
         return "negated"
     if env:
-        if _HEDGE.search(before) or _HEDGE.search(after):
+        if HEDGE.search(before) or HEDGE.search(after):
             return "hedged or future wording"
-        if _CITES_OTHERS.search(sentence):
+        if CITES_OTHERS.search(sentence):
             return "attributed to other work"
-        if not _OWN.search(sentence):
+        if not OWN.search(sentence):
             return "not stated about the authors' own system"
     return None
 
 
-def _collect(rows: list[tuple[Section, str]], key: str) -> tuple[list[dict], list[dict]]:
+def _collect(
+    rows: list[tuple[Section, str]], key: str, locator: PageLocator
+) -> tuple[list[dict], list[dict]]:
     """Return (accepted, rejected) hits for one signal, best first."""
     accepted: list[dict] = []
     rejected: list[dict] = []
@@ -291,7 +222,7 @@ def _collect(rows: list[tuple[Section, str]], key: str) -> tuple[list[dict], lis
     env = key in _ENV_KEYS
     order = 0
     for section, role in rows:
-        weight = _ROLE_WEIGHT.get(role, 0.0)
+        weight = ROLE_WEIGHT.get(role, 0.0)
         if role not in allowed or weight <= 0:
             continue
         for sentence in split_sentences(section.text):
@@ -301,7 +232,8 @@ def _collect(rows: list[tuple[Section, str]], key: str) -> tuple[list[dict], lis
                 if not match:
                     continue
                 hit = {
-                    "signal": key, "level": _SIGNAL_LEVEL[key], "page": section.page,
+                    "signal": key, "level": _SIGNAL_LEVEL[key],
+                    "page": locator.locate(sentence, section.page),
                     "quote": normalize_ws(sentence)[:240], "section": role,
                     "weight": weight, "order": order,
                 }
@@ -415,6 +347,8 @@ def assess_trl(
     nli_scorer: NLIScorer | None = None,
 ) -> dict:
     rows, recognised = _classified(doc)
+    locator = PageLocator(doc.pages)
+    artifacts = collect_artifacts(doc, locator)
     scorer = nli_scorer or (_default_scorer() if use_nli else None)
 
     findings: dict[str, dict | None] = {}
@@ -422,7 +356,7 @@ def assess_trl(
     near_misses: list[dict] = []
     nli_checked = False
     for key in _PATTERNS:
-        accepted, rejected = _collect(rows, key)
+        accepted, rejected = _collect(rows, key, locator)
         hit, nli_rejected, used = _select(key, accepted, scorer)
         findings[key] = hit
         support[key] = len(accepted)
@@ -453,13 +387,21 @@ def assess_trl(
         if findings["proven"]:
             env_level = 9
 
+    # Artifact track: a released, installable/served, documented system (<= TRL 6).
+    art_level = int(artifacts["level_hint"])
+
     cap_reasons: list[str] = []
     if env_level and not findings["experiment"]:
         cap_reasons.append(
             "Environment/deployment wording without an experimental evaluation is not counted."
         )
         env_level = 0
-    level = max(eval_level, env_level)
+    if art_level and not findings["experiment"]:
+        cap_reasons.append("Software artifacts without an experimental evaluation are not counted.")
+        art_level = 0
+    findings["artifacts"] = bool(art_level) or None  # shown as a signal flag
+    level = max(eval_level, env_level, art_level)
+    by_artifacts = art_level > max(eval_level, env_level)
 
     if review and level > 3:
         level = 3
@@ -488,10 +430,32 @@ def assess_trl(
                 item["nli"] = finding["nli"]
             evidence.append(item)
 
+    if art_level:
+        for item in artifacts["classes"]:
+            if item["status"] == "available" and item["key"] != "adoption" and len(
+                [e for e in evidence if e["signal"] == "artifacts"]
+            ) < 4:
+                evidence.append({
+                    "signal": "artifacts", "artifact": item["key"], "level": art_level,
+                    "page": item["page"], "quote": item["quote"], "section": "artifact",
+                })
+
+    for item in artifacts["classes"]:
+        if item["status"] == "promised":
+            near_misses.append({
+                "signal": "artifacts", "level": 5, "page": item["page"], "quote": item["quote"],
+                "reason": f"{item['label'].lower()} promised, not yet available", "order": 0,
+            })
+
     # Confidence and plausible range.
     deciding = _LEVEL_SIGNAL[level]
     deciding_hit = findings.get(deciding)
-    if level == 1 or not deciding_hit or review:
+    n_artifacts = len(artifacts["available"])
+    if review:
+        confidence = "low"
+    elif by_artifacts:
+        confidence = "high" if n_artifacts >= 4 and recognised else "medium"
+    elif level == 1 or not deciding_hit:
         confidence = "low"
     elif (support[deciding] >= 2 or "nli" in deciding_hit) and recognised:
         confidence = "high"
@@ -526,6 +490,13 @@ def assess_trl(
         ) + "."
     if cap_reason:
         explanation += " " + cap_reason
+    if art_level:
+        explanation += (
+            f" Software artifacts ({', '.join(artifacts['available'])}) support TRL {art_level}"
+            + (" and raise the level." if by_artifacts else ".")
+        )
+    elif artifacts["promised"]:
+        explanation += " Code/artifacts are promised but not yet available, so they are not counted."
     explanation += f" Confidence: {confidence}"
     if level_low != level_high:
         explanation += f" (plausible range TRL {level_low}-{level_high})"
@@ -559,4 +530,5 @@ def assess_trl(
         "near_misses": near_out,
         "nli_checked": nli_checked,
         "sections_recognised": recognised,
+        "artifacts": artifacts,
     }

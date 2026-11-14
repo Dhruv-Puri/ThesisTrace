@@ -1,0 +1,15 @@
+Rainfall Nowcasting Toolkit
+
+Code: https://github.com/lab/nowcast
+
+Abstract
+We release a nowcasting toolkit and evaluate it on radar data.
+
+1. Method
+We design a small convolutional model. Our code is publicly available and released under the MIT license. Install with pip install nowcast-kit. We provide a Docker image and a REST API. A live demo is hosted at https://nowcast.streamlit.app. The documentation is available at nowcast.readthedocs.io, and we ship a unit test suite run with GitHub Actions.
+
+2. Experiments
+We evaluate on a benchmark. Our model outperforms the baseline.
+
+References
+[1] Smith et al. Baseline. Code at https://github.com/smith/baseline

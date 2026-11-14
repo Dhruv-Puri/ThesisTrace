@@ -22,6 +22,7 @@ const SIGNAL_LABELS = {
   operational: "Operational",
   certified: "Certified",
   proven: "Proven in operation",
+  artifacts: "Software artifacts",
 };
 
 export default function TRLTab({ analysis }) {
@@ -81,7 +82,10 @@ export default function TRLTab({ analysis }) {
               {evidence.map((item, index) => (
                 <li key={`${item.signal}-${index}`}>
                   <div className="evidence-list-top">
-                    <strong>{SIGNAL_LABELS[item.signal] || item.signal}</strong>
+                    <strong>
+                      {SIGNAL_LABELS[item.signal] || item.signal}
+                      {item.artifact ? ` · ${item.artifact.replace(/_/g, " ")}` : ""}
+                    </strong>
                     <span className="cite">[p.{item.page}]</span>
                     <span className="fine-print">level {item.level}</span>
                   </div>
@@ -109,6 +113,28 @@ export default function TRLTab({ analysis }) {
               </div>
             ))}
           </div>
+          {trl.artifacts?.classes?.length ? (
+            <>
+              <p className="kicker">Software artifacts the paper ships</p>
+              <div className="signal-flags">
+                {trl.artifacts.classes.map((item) => (
+                  <div
+                    className={`signal-flag ${item.status === "available" ? "flag-on" : "flag-off"}`}
+                    key={item.key}
+                    title={item.quote || ""}
+                  >
+                    <span aria-hidden="true">
+                      {item.status === "available" ? "✓" : item.status === "promised" ? "…" : "—"}
+                    </span>
+                    {item.label}
+                    {item.status === "promised" ? " (promised)" : ""}
+                    {item.page ? ` [p.${item.page}]` : ""}
+                  </div>
+                ))}
+              </div>
+              <p className="fine-print">{trl.artifacts.note}</p>
+            </>
+          ) : null}
           <p className="fine-print">
             A negated sentence (“no field trial was conducted”) is deliberately not counted
             as evidence. The rubric caps the level when a higher signal is missing.
