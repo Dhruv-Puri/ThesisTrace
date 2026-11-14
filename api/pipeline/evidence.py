@@ -17,9 +17,12 @@ from __future__ import annotations
 
 import re
 
+
 from . import config, models
 from .classical import TfidfIndex
 from .textutils import detect_instruction_lines, numbers_in
+
+
 
 _SKIP_SECTION = re.compile(r"(reference|bibliograph|acknowledg|appendix)", re.I)
 _HEDGE = re.compile(r"\b(?:up to|may|might|can|could|potential(?:ly)?|approximately|about)\b", re.I)
@@ -40,6 +43,53 @@ class SentenceIndex:
             usable.append(sentence)
         self.sentences = usable
         self._tfidf = TfidfIndex([sentence["text"] for sentence in usable])
+        self._tokenizer = None
+        self._encoder = None
+        self._embeddings = None
+
+        if config.SEMANTIC:
+            embedder = models.get_embedder()
+            if embedder is not None:
+                self._tokenizer, self._encoder = embedder
+                try:
+                    self._embeddings = self._encode(
+                        [sentence["text"] for sentence in usable]
+                    )
+                except Exception:
+                    self._tokenizer = None
+                    self._encoder = None
+                    self._embeddings = None
+    def _encode(self, texts: list[str]):
+        import torch
+        import torch.nn.functional as F
+
+        batches = []
+
+        for start in range(0, len(texts), 32):
+            batch = texts[start:start + 32]
+
+            tokens = self._tokenizer(
+                batch,
+                padding=True,
+                truncation=True,
+                max_length=256,
+                return_tensors="pt",
+            )
+
+            with torch.inference_mode():
+                output = self._encoder(**tokens)
+                hidden = output.last_hidden_state
+                mask = tokens["attention_mask"].unsqueeze(-1)
+
+                pooled = (hidden * mask).sum(dim=1)
+                pooled = pooled / mask.sum(dim=1).clamp(min=1)
+                pooled = F.normalize(pooled, p=2, dim=1)
+
+            batches.append(pooled)
+
+        return torch.cat(batches, dim=0)
+
+
 
     def retrieve(
         self,
@@ -49,22 +99,62 @@ class SentenceIndex:
     ) -> list[dict]:
         if not self.sentences:
             return []
-        scores = self._tfidf.scores(query)
+
+        lexical_scores = self._tfidf.scores(query)
+        semantic_scores = None
+
+        if self._embeddings is not None:
+            try:
+                import torch
+
+                query_embedding = self._encode([query])[0]
+                semantic_scores = torch.matmul(
+                    self._embeddings, query_embedding
+                ).cpu().tolist()
+            except Exception:
+                semantic_scores = None
+
         exclude = exclude_ids or set()
-        ranked = sorted(
-            (
-                (float(score), index)
-                for index, score in enumerate(scores)
-                if index < len(self.sentences)
-                and int(self.sentences[index]["id"]) not in exclude
-            ),
+        ranked = []
+
+        for index, sentence in enumerate(self.sentences):
+            if int(sentence["id"]) in exclude:
+                continue
+
+            lexical = float(lexical_scores[index])
+
+            semantic = (
+                max(0.0, float(semantic_scores[index]))
+                if semantic_scores is not None
+                else None
+            )
+
+            if semantic is not None:
+                retrieval_score = (
+                    config.SEMANTIC_WEIGHT * semantic
+                    + config.LEXICAL_WEIGHT * lexical
+                )
+            else:
+                # Preserve the original TF-IDF-only behaviour.
+                retrieval_score = lexical
+
+            ranked.append({
+                **sentence,
+                "relevance": round(retrieval_score, 3),
+                "retrieval_score": round(retrieval_score, 3),
+                "lexical_relevance": round(lexical, 3),
+                "semantic_relevance": (
+                    round(semantic, 3)
+                    if semantic is not None
+                    else None
+                ),
+            })
+
+        ranked.sort(
+            key=lambda item: item["retrieval_score"],
             reverse=True,
         )
-        results = []
-        for score, index in ranked[:k]:
-            sentence = self.sentences[index]
-            results.append({**sentence, "relevance": round(score, 3)})
-        return results
+        return ranked[:k]
 
 
 def _normalise_label(label: str) -> str:
@@ -159,7 +249,10 @@ def _lexical_verdict(claim: str, candidates: list[dict]) -> tuple[str, float, di
         overlap = len(claim_tokens & passage_tokens) / len(claim_tokens)
         passage_numbers = {value.rstrip("%") for value in numbers_in(candidate["text"])}
         numbers_ok = claim_numbers.issubset(passage_numbers) if claim_numbers else True
-        score = overlap + (0.12 if numbers_ok else -0.15) + candidate["relevance"] * 0.2
+        lexical_score = candidate.get(
+             "lexical_relevance", candidate["relevance"]
+        )
+        score = overlap + (0.12 if numbers_ok else -0.15) + lexical_score * 0.2
         if score > best_overlap:
             best_overlap = score
             best = {**candidate, "overlap": overlap, "numbers_ok": numbers_ok}
@@ -305,14 +398,27 @@ def verify_claims(
 
         classified.sort(key=lambda item: item["choice"], reverse=True)
         best = classified[0]
-        best_rel = float(best["relevance"])
+
+        hybrid_mode = best.get("semantic_relevance") is not None
+
+        if hybrid_mode:
+            best_rel = float(best["retrieval_score"])
+            retrieval_floor = config.HYBRID_RETRIEVAL_FLOOR
+            supported_relevance = config.HYBRID_SUPPORTED_RELEVANCE
+            partial_relevance = config.HYBRID_PARTIAL_RELEVANCE
+        else:
+            best_rel = float(best["lexical_relevance"])
+            retrieval_floor = config.RETRIEVAL_FLOOR
+            supported_relevance = config.SUPPORTED_RELEVANCE
+            partial_relevance = config.PARTIAL_RELEVANCE
+
         entailment = max(item["scores"]["entailment"] for item in classified)
         contradiction = max(item["scores"]["contradiction"] for item in classified)
 
         if (
             contradiction >= config.CONTRADICTION_SCORE
             and contradiction > entailment
-            and best_rel >= 0.15
+            and best_rel >= retrieval_floor
         ):
             verdict = "insufficient"
             confidence = round(min(0.6, 0.3 + contradiction * 0.3), 2)
@@ -320,13 +426,13 @@ def verify_claims(
                 f"The closest passage [p.{best['page']}] appears to contradict the claim; "
                 "the paper does not support it as stated."
             )
-        elif entailment >= config.SUPPORTED_ENTAILMENT and best_rel >= config.SUPPORTED_RELEVANCE:
+        elif entailment >= config.SUPPORTED_ENTAILMENT and best_rel >= supported_relevance:
             verdict = "supported"
             confidence = round(
                 min(0.99, 0.60 * entailment + 0.40 * min(1.0, best_rel / 0.60)), 2
             )
             note = ""
-        elif entailment >= config.PARTIAL_ENTAILMENT and best_rel >= config.PARTIAL_RELEVANCE:
+        elif entailment >= config.PARTIAL_ENTAILMENT and best_rel >= partial_relevance:
             verdict = "partially_supported"
             confidence = round(min(0.8, 0.35 + 0.45 * entailment), 2)
             note = _partial_note(claim["text"], best["text"], best["page"])

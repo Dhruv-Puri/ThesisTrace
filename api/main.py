@@ -30,8 +30,16 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import __version__
 from api.jobs import runner
-from api.pipeline import PIPELINE_VERSION, chat, config, llm, models
-
+from api.pipeline import (
+    PIPELINE_VERSION,
+    chat,
+    config,
+    llm,
+    models,
+    ingest,
+    research_profile,
+    research_differentiator,
+)
 logger = logging.getLogger("paper2reality.api")
 
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
@@ -328,4 +336,80 @@ def job_chat(job_id: str, body: ChatRequest):
         raise HTTPException(
             status_code=exc.status,
             detail={"code": exc.code, "message": exc.message},
+        ) from exc
+
+
+
+@app.post("/api/jobs/{job_id}/differentiate")
+def job_differentiate(job_id: str, limit: int = 8):
+    """Compare the uploaded paper with related academic literature."""
+
+    if not llm.enabled():
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "DIFFERENTIATOR_DISABLED",
+                "message": "Configure GEMINI_API_KEY to use research differentiation.",
+            },
+        )
+
+    if not 1 <= limit <= 20:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_LIMIT",
+                "message": "The paper search limit must be between 1 and 20.",
+            },
+        )
+
+    job = runner.get_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+
+    if job["status"] == "error":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_FAILED", "message": "The original paper analysis failed."},
+        )
+
+    source = runner.get_source(job_id)
+    if not source:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "Wait for the original analysis to finish."},
+        )
+
+    path, filename = source
+
+    try:
+        document = ingest.ingest_file(path, filename)
+        extracted = research_profile.extract_research_profile(
+            document,
+            use_llm=True,
+        )
+
+        comparison = research_differentiator.run_research_differentiator(
+            extracted["profile"],
+            limit=limit,
+            use_llm=True,
+        )
+
+        return {
+            "job_id": job_id,
+            "filename": filename,
+            "research_profile": extracted,
+            "differentiation": comparison,
+        }
+
+    except Exception as exc:
+        logger.exception("Research differentiation failed for job %s", job_id)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "DIFFERENTIATION_FAILED",
+                "message": f"Research differentiation failed ({exc.__class__.__name__}). Check API logs.",
+            },
         ) from exc

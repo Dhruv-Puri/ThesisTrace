@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
 # repo root: api/pipeline/config.py -> api/pipeline -> api -> repo
 ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT / ".env")
 
 
 def _flag(name: str, default: str = "0") -> bool:
@@ -23,6 +24,17 @@ def _flag(name: str, default: str = "0") -> bool:
 # ---------------------------------------------------------------------------
 LOW_RAM = _flag("LOW_RAM")                 # small models / gazetteer-only NER
 SEMANTIC = _flag("SEMANTIC")               # optional embedding rerank
+# Semantic retrieval
+EMBEDDING_MODEL = os.getenv(
+    "P2R_EMBEDDING_MODEL",
+    "sentence-transformers/all-MiniLM-L6-v2",
+)
+SEMANTIC_WEIGHT = 0.6
+LEXICAL_WEIGHT = 0.4
+SEMANTIC_MIN_SIMILARITY = 0.35
+HYBRID_RETRIEVAL_FLOOR = 0.20
+HYBRID_SUPPORTED_RELEVANCE = 0.35
+HYBRID_PARTIAL_RELEVANCE = 0.20
 TOKENIZER_STUDY_ENABLED = _flag("P2R_TOKENIZER_STUDY", "1")
 LLM_CLAIMS_ENABLED = _flag("P2R_LLM_CLAIMS", "1")
 LLM_REPORT_ENABLED = _flag("P2R_LLM_REPORT", "0")
@@ -99,6 +111,7 @@ def public_config() -> dict:
         "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
         "low_ram": LOW_RAM,
         "semantic": SEMANTIC,
+
         "max_upload_mb": MAX_UPLOAD_MB,
         "tokenizer_study": TOKENIZER_STUDY_ENABLED,
     }
