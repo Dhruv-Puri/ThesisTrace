@@ -89,6 +89,12 @@ do. PaperLens would require reading its synthesis and still not produce the scor
 defensible readiness level and the gaps that block licensing. An answer engine gives them
 prose; ThesisTrace gives them a report with page citations and a next-step list.
 
+**Win — one paper, three stakeholders.** A lab reads the same paper for different reasons:
+the researcher wants the open question, the engineer wants the missing seed and environment,
+and the business lead wants the next milestone. The three decision lenses give each reader
+the same evidence with a different emphasis, instead of three separate summaries that drift
+apart. PaperLens has no role-specific view; it has one synthesis for everyone.
+
 **Lose — "what is the state of the art in X?"** PaperLens is the right tool. Do not demo
 against this question. Concede it explicitly on the comparison slide; judges reward a
 positioning that knows its boundary.

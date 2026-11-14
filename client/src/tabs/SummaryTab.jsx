@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { CoverageRadar, EmptyState, RingGauge, TYPE_LABELS, formatNumber } from "../components/ui.jsx";
+import LensPanel from "../components/LensPanel.jsx";
 
 const PART_LABELS = {
   term_density: "Technical terms",
@@ -97,6 +98,8 @@ export default function SummaryTab({ analysis }) {
           />
         </div>
       </section>
+
+      <LensPanel analysis={analysis} />
 
       <div className="summary-grid">
         <section className="block">

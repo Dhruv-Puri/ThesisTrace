@@ -795,6 +795,8 @@
   "trl": {
     "level": 4,
     "label": "Technology validated in lab",
+    "confidence": "medium",
+    "level_range": [4, 5],
     "why": "Level 4 (Technology validated in lab) is the highest readiness level supported by the paper's own wording. Evidence: baseline [p.6]; experiment [p.6]; method [p.3]; problem [p.1]. No field/pilot evidence was found, and the discussion explicitly says no production deployment was conducted. Of 6 extracted claims, 2 cleared the evidence threshold; the rest should be read as unverified, not proven false.",
     "note": "No field/pilot evidence was found.",
     "review_document": false,

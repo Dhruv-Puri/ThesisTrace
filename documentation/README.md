@@ -1,12 +1,13 @@
 # ThesisTrace — Documentation Hub
 
-> **From a research paper to evidence, readiness, and a real-world roadmap.**
+> **PaperLens tells you what the literature says. ThesisTrace tells you whether to build on it.**
 > Course project for **CSR322: Natural Language Processing** (Session 2026-27, Credits 3, L:2 T:0 P:2).
 
 Upload a research paper, patent, or technical report → ThesisTrace explains what it
 does, extracts the key concepts, checks whether the paper's own claims are supported by
 its own evidence, scores technology readiness (TRL 1–9) with cited evidence, and lists
-what still needs to happen to turn the research into a real-world product.
+what still needs to happen to turn the research into a real-world product. The same audit
+is then shown through researcher, engineer and business lenses.
 
 **This is not a paper summarizer.** It is a research-to-commercialization intelligence
 tool — and it is built as a *proper NLP pipeline* first, with the LLM layer grounded on
@@ -22,6 +23,7 @@ top (never the other way around).
 
 | # | Document | What it answers |
 |---|----------|-----------------|
+| 0 | [Overview.md](../Overview.md) | Start here: the plain-language product tour, the full upload-to-report workflow with examples, competitors, business view, FAQ, and a five-session study path |
 | 1 | [Progress.md](Progress.md) | Where are we right now? Task status, the dated "what was built so far" changelog with a verified-layer table, blockers, demo checklist |
 | 2 | [Concepts-and-Syllabus.md](Concepts-and-Syllabus.md) | Which syllabus concept does each feature use? Full mapping to Units I–VI, CO1–CO6, and all 8 practicals |
 | 3 | [Feasibility-Analysis.md](Feasibility-Analysis.md) | Can a beginner–intermediate team build this in 3–4 weeks on weak PCs? Scope cuts, risks, costs |

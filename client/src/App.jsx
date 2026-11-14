@@ -117,6 +117,9 @@ function StartScreen({ onFile, onDemo, busy }) {
           Upload a paper. See which claims its own evidence supports, whether it can be
           rebuilt, and how close it is to real-world use.
         </p>
+        <p className="start-audience">
+          For thesis writers, lab leads and technology-transfer teams.
+        </p>
         <Dropzone onFile={onFile} busy={busy} />
         <button type="button" className="text-button sample-link" onClick={onDemo}>
           See a sample analysis <Icon name="arrow" size={14} />

@@ -51,8 +51,10 @@ we designed, so it doubles as proof that graceful degradation works.
 | Portfolio | `api/pipeline/portfolio.py` compares 2–5 analyses: readiness table + near-duplicate claims scored in both directions as agree/conflict/unscored. `POST /api/portfolios`, `GET /api/portfolios/{id}`. |
 | Evaluation harness | `eval/run_eval.py` reports verdict accuracy, per-class P/R/F1, recall@k, citation coverage and latency with N. Seed set: 15 developer-labelled cases. |
 | UI rebuild | 7 tabs → 4; duplicated score cards removed; syllabus kickers moved out of the product; claims collapse to claim + verdict + page; receipts behind "Why this verdict?". |
+| Decision lenses | Summary panel: the same paper as a researcher, engineer or business decision, generated from claims, reproducibility and TRL with no extra model call. |
+| Motion polish | Ring gauges draw on mount, progress shimmer, animated lens switch, hover states, reduced-motion fallbacks. |
 | Business documents | Competitive analysis (incl. PaperLens), business plan, validation plan, production readiness. |
-| Deck | Rebuilt: 15 core slides + 3 appendix, measured numbers with N, honest competitor row, team slide, demo script. |
+| Deck | Rebuilt: 15 core slides + 3 appendix, measured numbers with N, honest competitor row, team slide, demo script. Speaker notes explain the three lenses. |
 
 Still open: model-backed tier has not been timed; gold labels are a seed set; no auth/quota;
 interviews not yet conducted.

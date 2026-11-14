@@ -12,8 +12,8 @@ evaluation numbers in section 6 are measured on this checkout.
 |---|---|
 | Problem | A paper's headline claim can be cited without anyone checking whether its own evidence supports it, whether it can be rebuilt, or how close it is to use. |
 | Customer segments | (1) Thesis and literature-review writers; (2) supervisors and research labs; (3) tech-transfer and R&D scouting; (4) deep-tech founders and investors. |
-| Unique value proposition | Turn one paper into an evidence audit and a readiness decision, with a receipt behind every verdict. |
-| Solution | Claim verdicts + reproducibility audit + TRL + gaps + cited report + portfolio comparison. |
+| Unique value proposition | Turn one paper into an evidence audit and a readiness decision, with a receipt behind every verdict and one view for each stakeholder. |
+| Solution | Claim verdicts + reproducibility audit + TRL + gaps + cited report + portfolio comparison + researcher/engineer/business lenses. |
 | Channels | Supervisor recommendation, university library/workshop, open local demo, conference and thesis-community content. |
 | Revenue streams | Student subscription, researcher subscription, per-seat lab licence, self-hosted institutional licence, API. |
 | Cost structure | CPU compute (small), model downloads (one-off), support and content (dominant), payment fees. |

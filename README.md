@@ -2,6 +2,10 @@
 
 **PaperLens tells you what the literature says. ThesisTrace tells you whether to build on it.**
 
+**New here?** Read [Overview.md](Overview.md) for a plain-language tour: the full upload
+workflow, what each technology does, how it differs from competitors, and a short study
+path for the NLP behind it.
+
 A CSR322 (Natural Language Processing) course project. Upload a paper, patent-style
 report, or technical note and get:
 
@@ -10,6 +14,8 @@ report, or technical note and get:
 - **Claims** — every major claim checked against the paper's own retrieved evidence;
 - a **Trust Ledger** — the retrieval score, NLI probabilities, thresholds, model and
   pipeline version behind every verdict, exportable as JSON;
+- **Decision lenses** — the same paper read as a researcher, an engineer, or a business
+  decision, each grounded in the same evidence;
 - a **reproducibility audit** with 12 cited signals;
 - a **TRL 1–9** readiness level with quoted evidence;
 - a **portfolio** that compares 2–5 papers on readiness and flags the same claim when two
@@ -20,8 +26,8 @@ It is deliberately *not* a chat-with-your-PDF wrapper: the classical NLP pipelin
 the retrieval, the NLI cross-encoder assigns verdicts, and the optional LLM only writes
 prose over already-retrieved text.
 
-The **Ask** tab adds grounded Q&A on top of that same retrieval index: your question
-retrieves passages from the paper, only those passages go to Gemini, and answers carry
+The **Ask** button opens a drawer with grounded Q&A on top of that same retrieval index:
+your question retrieves passages from the paper, only those passages go to Gemini, and answers carry
 `[p.N]` citations (any citation that does not match a retrieved page is stripped). Chat
 needs `GEMINI_API_KEY`; without one the tab says so instead of answering.
 

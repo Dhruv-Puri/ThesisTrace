@@ -149,6 +149,10 @@ export function RingGauge({ value = 0, max = 100, label, display, sublabel, tone
             r={radius}
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - ratio)}
+            style={{
+              "--ring-circumference": circumference,
+              "--ring-offset": circumference * (1 - ratio),
+            }}
           />
         </svg>
         <span className="ring-text">

@@ -161,7 +161,7 @@ client/src/
 ├── App.jsx              start → job polling → analysis shell / portfolio
 ├── api.js               fetch wrappers for the API above
 ├── styles.css           design system (no UI framework dependency)
-├── components/          ui primitives, PortfolioScreen
+├── components/          ui primitives, PortfolioScreen, LensPanel (researcher/engineer/business views)
 ├── mocks/               demo analysis + sample portfolio
 └── tabs/
     ├── SummaryTab.jsx       3 bullets, ELI5 toggle, collapsed key concepts
@@ -172,7 +172,9 @@ client/src/
 ```
 
 Four tabs render one JSON object. Start, analysis and portfolio are the only screens.
-Job flow: upload → poll `GET /api/jobs/{id}` every 1.5 s → render when `done`.
+The Summary’s three decision lenses are a presentation layer over the same claims, TRL and
+reproducibility fields; they add no backend call and no new claim. Job flow: upload → poll
+`GET /api/jobs/{id}` every 1.5 s → render when `done`.
 
 ## 6. Tech stack
 
