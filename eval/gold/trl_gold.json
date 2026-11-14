@@ -1,0 +1,13 @@
+{
+  "note": "SEED CASES ONLY. These are synthetic regression cases labelled by the developer, not by independent human raters. Add real papers (PDF/TXT under eval/corpus/) labelled by two raters and mark them \"source\": \"real\"; report the two groups separately.",
+  "papers": [
+    {"file": "eval/corpus/benchmark_only_certified_robustness.txt", "human": [4], "source": "synthetic"},
+    {"file": "eval/corpus/user_survey_field_study.txt", "human": [6], "source": "synthetic"},
+    {"file": "eval/corpus/deployed_fraud_system.txt", "human": [9], "source": "synthetic"},
+    {"file": "eval/corpus/survey_of_methods.txt", "human": [3], "source": "synthetic"},
+    {"file": "eval/corpus/theory_only.txt", "human": [2], "source": "synthetic"},
+    {"file": "eval/corpus/hedged_future_deployment.txt", "human": [4], "source": "synthetic"},
+    {"file": "eval/corpus/related_work_deployment_by_others.txt", "human": [4], "source": "synthetic"},
+    {"file": "eval/corpus/testbed_validation.txt", "human": [5], "source": "synthetic"}
+  ]
+}

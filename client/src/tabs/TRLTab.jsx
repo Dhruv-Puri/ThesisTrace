@@ -44,6 +44,12 @@ export default function TRLTab({ analysis }) {
             <Tag tone="accent">{evidence.length} cited signals</Tag>
             {trl.review_document ? <Tag tone="warn">review document</Tag> : null}
             <Tag tone="neutral">{trl.note}</Tag>
+            {trl.confidence ? (
+              <Tag tone={trl.confidence === "high" ? "accent" : "neutral"}>{trl.confidence} confidence</Tag>
+            ) : null}
+            {Array.isArray(trl.level_range) && trl.level_range[0] !== trl.level_range[1] ? (
+              <Tag tone="neutral">plausible range TRL {trl.level_range[0]}–{trl.level_range[1]}</Tag>
+            ) : null}
           </div>
         </div>
         <div className="trl-ladder" aria-label="TRL ladder">
