@@ -1,1 +1,1 @@
-"""Background analysis jobs (one CPU-heavy job at a time)."""
+"""Background analysis jobs: durable SQLite queue, worker pool and retention."""

@@ -128,3 +128,26 @@ anything on this list, it needs a new container instead.
 Configuration variables use the `THESISTRACE_` prefix (for example `THESISTRACE_DATA_DIR`,
 `THESISTRACE_MAX_UPLOAD_MB`). The pre-rename `P2R_` prefix is still read as a fallback, so an
 existing `.env` keeps working; when both are set, `THESISTRACE_` wins.
+
+## Running in public: queue and retention
+
+Defaults suit a laptop (one worker inside the API container). For a public deployment:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `THESISTRACE_JOB_MODE` | `inline` | `external` makes the API only enqueue; run the `worker` service |
+| `THESISTRACE_JOB_WORKERS` | `1` | parallel analyses per worker process (each needs RAM) |
+| `THESISTRACE_JOB_MAX_QUEUE` | `20` | queued + running jobs; above it uploads get HTTP 503 |
+| `THESISTRACE_JOB_TIMEOUT_SECONDS` | `900` | a job running longer is stopped |
+| `THESISTRACE_UPLOAD_TTL_SECONDS` | `3600` | uploaded file deleted this long after a job finishes |
+| `THESISTRACE_RESULT_TTL_SECONDS` | `86400` | whole analysis deleted after this |
+| `THESISTRACE_JOB_MAX_STORED` | `200` | cap on finished jobs kept |
+
+Separate worker container (Linux host recommended, see the note in `docker-compose.yml`):
+
+```bash
+THESISTRACE_JOB_MODE=external docker compose --profile scale up --build
+```
+
+Also put a reverse proxy with TLS and request rate limiting in front of the web container; the
+app itself has no accounts and no per-client limits.

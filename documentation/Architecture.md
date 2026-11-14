@@ -139,15 +139,17 @@ thresholds (this last one must still explain *what was searched*).
 
 | Method & path | Purpose | Returns |
 |---------------|---------|---------|
-| `GET /api/health` | container healthcheck | `{"status":"ok","models_loaded":["ner","nli","summarizer"]}` |
-| `POST /api/jobs` | multipart upload (`file`), starts analysis | `{"job_id":"..."}` (202) |
-| `GET /api/jobs/{id}` | poll status/result | `PaperAnalysis` (above) with `status` |
+| `GET /api/health` | container healthcheck + queue depth | `{"status":"ok","models_loaded":[...],"queue":{"mode":"inline","queued":0,"running":0}}` |
+| `POST /api/jobs` | multipart upload (`file`), enqueues analysis | `{"job_id":"..."}` (202); `503 QUEUE_FULL` + `Retry-After` when the queue is at capacity |
+| `GET /api/jobs/{id}` | poll status/result | `PaperAnalysis` (above) with `status`; queued jobs add `queue_ahead` |
+| `DELETE /api/jobs/{id}` | delete the analysis and its uploaded file | `{"status":"deleted"}`; `409 JOB_ACTIVE` while running |
 | `GET /api/jobs/{id}/report?format=md` | downloadable executive report | markdown |
 | `GET /api/config` | feature flags to the UI | `{"gemini_enabled":false,"low_ram":false}` |
 
 Errors: `{"status":"error","error":{"code":"UNSUPPORTED_FILE","message":"..."}}`.
-Limits: PDF/TXT ≤ 30 MB; one analysis at a time per container (queue the rest) — honest
-about CO6: a laptop CPU cannot run two summarizers at once.
+Limits: PDF/TXT ≤ 30 MB; a `.pdf` must really start with `%PDF`; the queue holds at most
+`THESISTRACE_JOB_MAX_QUEUE` queued + running jobs (default 20). One analysis at a time per
+worker by default — honest about CO6: a laptop CPU cannot run two summarizers at once.
 
 ## 5. Frontend (React) structure
 
@@ -207,3 +209,33 @@ PDF → NER → summary → claims → evidence takes 15–60 s on CPU. A 60 s H
 time out through nginx and feels broken. So: `POST /api/jobs` returns immediately with an
 id; a worker thread runs the pipeline, updating `status`/`progress`; the UI polls. This is
 also our honest CO6 story: latency is *managed* (progress feedback + queue), not hidden.
+
+### Job queue, workers and retention
+
+```
+POST /api/jobs ──► JobStore (SQLite, WAL, durable) ◄── Worker threads / worker processes
+                          ▲                                   │ claim (atomic) · heartbeat · finish
+                          └──────────── Janitor ◄─────────────┘ lease recovery · upload/result TTL
+```
+
+* **Durable.** Jobs and results live in `jobs.sqlite3` under the data directory, so a restart
+  loses nothing: queued jobs run after the restart, finished jobs stay downloadable.
+* **Atomic claim + leases.** `claim` runs in `BEGIN IMMEDIATE`; a running job holds a lease that
+  its worker extends (heartbeat). A crashed worker's job is retried (`JOB_MAX_ATTEMPTS`, default
+  2) and then failed with `WORKER_LOST`. Progress/finish/fail are fenced by the lease owner, so a
+  zombie worker cannot overwrite a retried job.
+* **Bounded.** The queue rejects new uploads above `JOB_MAX_QUEUE` *before* reading the file
+  body, and a job running longer than `JOB_TIMEOUT_SECONDS` is stopped at its next progress call.
+* **Two modes.** `inline` (default): the API process runs `JOB_WORKERS` worker threads - one
+  command, laptop-friendly. `external`: the API only enqueues and `python -m api.jobs.worker`
+  (compose profile `scale`) runs workers and the janitor, one model set per process.
+* **Retention.** A failed job loses its upload immediately; a finished job keeps its upload for
+  `UPLOAD_TTL_SECONDS` (1 h; the Ask tab re-reads it) and the whole analysis for
+  `RESULT_TTL_SECONDS` (24 h); at most `JOB_MAX_STORED` finished jobs are kept; unreferenced
+  files in the upload folder are removed after an hour; files outside the upload folder are never
+  touched. Users can also `DELETE /api/jobs/{id}` (the UI does this on "new paper").
+* **Why SQLite, not Redis/Celery.** The models live inside the worker process, so the queue only
+  needs to be durable and safe for a few workers on one host - no extra service to run. The
+  `JobStore` interface is small enough to re-implement on Redis or Postgres if you outgrow it.
+  Known limits: one host (SQLite is not for network filesystems), no per-client rate limiting yet
+  (put a reverse proxy rate limit in front for a public deployment).

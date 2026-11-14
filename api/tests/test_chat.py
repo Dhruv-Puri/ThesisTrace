@@ -1,11 +1,12 @@
 import importlib.util
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
 from api.jobs import runner
 from api.pipeline import chat, llm
-from api.tests.helpers import SAMPLE_PAPER, temp_dir
+from api.tests.helpers import SAMPLE_PAPER, isolated_jobs, temp_dir
 
 HAS_FASTAPI = bool(
     importlib.util.find_spec("fastapi") and importlib.util.find_spec("httpx")
@@ -132,6 +133,9 @@ class ChatEndpointTests(unittest.TestCase):
         from api.main import app
 
         chat.reset_cache()
+        stack = ExitStack()
+        stack.enter_context(isolated_jobs())  # private queue DB; never touches .data
+        self.addCleanup(stack.close)
         self.client = TestClient(app)
 
     def _finished_job(self, tmp: str) -> str:

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from api.jobs import runner
 from api.pipeline.ingest import IngestError
-from api.tests.helpers import temp_dir
+from api.tests.helpers import isolated_jobs
 
 
 class JobTests(unittest.TestCase):
@@ -14,8 +14,8 @@ class JobTests(unittest.TestCase):
                 progress(50, "Halfway")
             return {"status": "done", "doc": {"title": "Fake paper", "pages": 1}}
 
-        with temp_dir() as tmp:
-            path = Path(tmp) / "fake.txt"
+        with isolated_jobs() as tmp:
+            path = Path(tmp) / "uploads" / "fake.txt"
             path.write_text("fake", encoding="utf-8")
             with patch("api.jobs.runner.analyze_document", fake_analyze):
                 job = runner.create_job(path, "fake.txt")
@@ -30,8 +30,8 @@ class JobTests(unittest.TestCase):
         def failing_analyze(path, filename, progress=None):
             raise IngestError("NO_TEXT_LAYER", "The PDF has no text layer.")
 
-        with temp_dir() as tmp:
-            path = Path(tmp) / "bad.pdf"
+        with isolated_jobs() as tmp:
+            path = Path(tmp) / "uploads" / "bad.pdf"
             path.write_bytes(b"%PDF-fake")
             with patch("api.jobs.runner.analyze_document", failing_analyze):
                 job = runner.create_job(path, "bad.pdf")
@@ -39,6 +39,7 @@ class JobTests(unittest.TestCase):
 
         self.assertEqual(finished["status"], "error")
         self.assertEqual(finished["error"]["code"], "NO_TEXT_LAYER")
+        self.assertFalse(path.exists(), "a failed job's upload is deleted immediately")
 
 
 if __name__ == "__main__":

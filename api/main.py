@@ -3,23 +3,25 @@
 Routes (documentation/Architecture.md section 4):
     GET  /api/health
     GET  /api/config
-    POST /api/jobs                     multipart upload -> 202 + job id
-    GET  /api/jobs/{job_id}            status/progress or full PaperAnalysis
+    POST /api/jobs                     multipart upload -> 202 + job id (503 if the queue is full)
+    GET  /api/jobs/{job_id}            status/progress/queue position or full PaperAnalysis
+    DELETE /api/jobs/{job_id}          delete the analysis and its uploaded file
     GET  /api/jobs/{job_id}/report     markdown executive report
     POST /api/jobs/{job_id}/chat       grounded Q&A over the paper (needs Gemini)
 
 Uploads are written to the project-local data directory (or the Docker volume),
-never to a system path.  The only heavy work happens in the background job thread.
+never to a system path.  The heavy work runs in queue workers (api/jobs): a durable
+SQLite queue, a bounded worker pool, and a janitor that deletes old uploads/results.
 """
 
 from __future__ import annotations
 
 import logging
 import re
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
-from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -30,6 +32,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import __version__
 from api.jobs import runner
+from api.jobs.store import QueueFull
 from api.pipeline import PIPELINE_VERSION, chat, config, llm, models
 
 logger = logging.getLogger("thesistrace.api")
@@ -46,6 +49,7 @@ _STATUS_CODES = {
     404: "NOT_FOUND",
     409: "NOT_READY",
     413: "FILE_TOO_LARGE",
+    503: "UNAVAILABLE",
     415: "UNSUPPORTED_FILE",
     422: "VALIDATION_ERROR",
 }
@@ -59,6 +63,17 @@ class ChatTurn(BaseModel):
 class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     history: list[ChatTurn] = Field(default_factory=list, max_length=40)
+
+
+def _queue_full() -> HTTPException:
+    return HTTPException(
+        status_code=503,
+        detail={
+            "code": "QUEUE_FULL",
+            "message": "The analysis queue is full right now. Please try again in a minute.",
+        },
+        headers={"Retry-After": "30"},
+    )
 
 
 def _error(code: str, message: str) -> dict:
@@ -85,7 +100,11 @@ async def lifespan(_: FastAPI):
         bool(config.GEMINI_API_KEY),
         config.LOW_RAM,
     )
-    yield
+    runner.start()
+    try:
+        yield
+    finally:
+        runner.shutdown()
 
 
 app = FastAPI(
@@ -98,7 +117,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -112,7 +131,11 @@ async def http_exception_handler(_: Request, exc: StarletteHTTPException):
     else:
         code = _STATUS_CODES.get(exc.status_code, "HTTP_ERROR")
         message = str(detail or "Request failed.")
-    return JSONResponse(status_code=exc.status_code, content=_error(code, message))
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=_error(code, message),
+        headers=getattr(exc, "headers", None),
+    )
 
 
 @app.exception_handler(RequestValidationError)
@@ -154,6 +177,7 @@ async def health():
         "models_loaded": models.loaded_models(),
         "dependencies": status["dependencies"],
         "mode": config.public_config(),
+        "queue": runner.queue_stats(),
         "pipeline_version": PIPELINE_VERSION,
     }
 
@@ -187,7 +211,11 @@ async def create_job(file: UploadFile = File(...)):
             },
         )
 
-    job_id = uuid4().hex[:12]
+    # Fail fast, before writing a (possibly 30 MB) upload we could not process anyway.
+    if not runner.has_capacity():
+        raise _queue_full()
+
+    job_id = uuid.uuid4().hex
     config.ensure_dirs()
     destination = config.UPLOAD_DIR / f"{job_id}{suffix}"
     size = 0
@@ -197,6 +225,16 @@ async def create_job(file: UploadFile = File(...)):
                 chunk = await file.read(1024 * 1024)
                 if not chunk:
                     break
+                if size == 0 and suffix == ".pdf" and b"%PDF" not in chunk[:1024]:
+                    handle.close()
+                    destination.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=415,
+                        detail={
+                            "code": "UNSUPPORTED_FILE",
+                            "message": "That file is named .pdf but is not a PDF document.",
+                        },
+                    )
                 size += len(chunk)
                 if size > config.MAX_UPLOAD_BYTES:
                     handle.close()
@@ -228,11 +266,32 @@ async def create_job(file: UploadFile = File(...)):
             detail={"code": "EMPTY_FILE", "message": "The uploaded file is empty."},
         )
 
-    job = runner.create_job(destination, name, job_id=job_id)
+    try:
+        job = runner.create_job(destination, name, job_id=job_id)
+    except QueueFull:
+        destination.unlink(missing_ok=True)
+        raise _queue_full() from None
     return JSONResponse(
         status_code=202,
         content={"job_id": job["job_id"], "status": job["status"], "filename": name},
     )
+
+
+@app.delete("/api/jobs/{job_id}")
+async def delete_job(job_id: str):
+    """Delete an analysis and its uploaded file (privacy: users can remove their data)."""
+    outcome = runner.delete_job(job_id)
+    if outcome == "missing":
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+    if outcome == "active":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_ACTIVE", "message": "The analysis is still running; try again when it finishes."},
+        )
+    return {"status": "deleted", "job_id": job_id}
 
 
 @app.get("/api/jobs/{job_id}")

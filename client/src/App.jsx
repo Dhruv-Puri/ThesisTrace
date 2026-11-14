@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import MOCK_ANALYSIS from "./mocks/paperAnalysis.json";
-import { getConfig, getJob, uploadPaper } from "./api.js";
+import { deleteJob, getConfig, getJob, uploadPaper } from "./api.js";
 import ChatTab, { useChat } from "./tabs/ChatTab.jsx";
 import ClaimCheckTab from "./tabs/ClaimCheckTab.jsx";
 import ConceptsTab from "./tabs/ConceptsTab.jsx";
@@ -386,6 +386,9 @@ export default function App() {
   }
 
   function reset() {
+    // Best effort: remove the finished analysis and the uploaded file from the server.
+    // A still-running job answers 409 and is cleaned up by the retention janitor instead.
+    if (jobId && !isDemo) deleteJob(jobId).catch(() => {});
     setPhase("idle");
     setJob(null);
     setJobId(null);

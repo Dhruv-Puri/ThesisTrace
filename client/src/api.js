@@ -47,3 +47,11 @@ export async function askPaper(jobId, question, history = []) {
   });
   return readJson(response);
 }
+
+export async function deleteJob(jobId) {
+  const response = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`, {
+    method: "DELETE",
+    headers: JSON_HEADERS,
+  });
+  return readJson(response);
+}

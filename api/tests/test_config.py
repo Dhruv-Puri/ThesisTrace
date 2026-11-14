@@ -9,13 +9,13 @@ from api.pipeline import config
 class ConfigTests(unittest.TestCase):
     def test_default_data_dir_is_project_local(self):
         if (os.environ.get("THESISTRACE_DATA_DIR") or os.environ.get("P2R_DATA_DIR")):
-            self.skipTest("THESISTRACE_DATA_DIR is overridden (Docker mounts /data)")
+            self.skipTest("data directory is overridden")
         self.assertEqual(config.DATA_DIR.resolve(), (config.ROOT / ".data").resolve())
         self.assertTrue(config.UPLOAD_DIR.resolve().is_relative_to(config.ROOT.resolve()))
 
     def test_hugging_face_cache_defaults_inside_the_project(self):
         if (os.environ.get("THESISTRACE_DATA_DIR") or os.environ.get("P2R_DATA_DIR")):
-            self.skipTest("Docker sets HF_HOME explicitly to /models/hf")
+            self.skipTest("Docker sets the data directory and HF_HOME explicitly")
         self.assertTrue(Path(os.environ["HF_HOME"]).resolve().is_relative_to(config.ROOT))
 
     def test_public_config_never_exposes_the_key(self):

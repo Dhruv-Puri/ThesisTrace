@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from api.pipeline.ingest import ingest_text
@@ -11,6 +12,26 @@ BASE_TMP = Path(__file__).resolve().parent / ".tmp"
 def temp_dir() -> tempfile.TemporaryDirectory:
     BASE_TMP.mkdir(parents=True, exist_ok=True)
     return tempfile.TemporaryDirectory(dir=str(BASE_TMP))
+
+
+@contextmanager
+def isolated_jobs(**overrides):
+    """A throw-away job queue (own SQLite file + upload dir) so tests never touch ``.data``."""
+    from api.jobs import runner
+
+    with temp_dir() as tmp:
+        uploads = Path(tmp) / "uploads"
+        uploads.mkdir()
+        settings = dict(
+            db_path=Path(tmp) / "jobs.sqlite3", upload_dir=uploads,
+            poll_interval=0.02, cleanup_interval=3600.0,
+        )
+        settings.update(overrides)
+        runner.reset(**settings)
+        try:
+            yield tmp
+        finally:
+            runner.shutdown()
 
 
 SAMPLE_PAPER = """SparseRoute: Adaptive Sparsity for Efficient Neural Machine Translation

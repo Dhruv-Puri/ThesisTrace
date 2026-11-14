@@ -19,10 +19,44 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}   # from .env; empty = fully local mode
       LOW_RAM: ${LOW_RAM:-0}
       SEMANTIC: ${SEMANTIC:-0}
+      THESISTRACE_JOB_MODE: ${THESISTRACE_JOB_MODE:-inline}   # inline | external (see worker below)
+      THESISTRACE_JOB_WORKERS: ${THESISTRACE_JOB_WORKERS:-1}
+      THESISTRACE_JOB_MAX_QUEUE: ${THESISTRACE_JOB_MAX_QUEUE:-20}
+      THESISTRACE_UPLOAD_TTL_SECONDS: ${THESISTRACE_UPLOAD_TTL_SECONDS:-3600}
+      THESISTRACE_RESULT_TTL_SECONDS: ${THESISTRACE_RESULT_TTL_SECONDS:-86400}
       PYTHONUNBUFFERED: "1"
     volumes:
       - ./.data/hf:/models/hf     # HF weights: downloaded once, survives rebuilds
-      - ./.data:/data             # uploads + job results (inside this folder)
+      - ./.data:/data             # uploads + job queue DB + results (inside this folder)
+    restart: unless-stopped
+
+  # Optional: scale analysis out of the API process. Start with
+  #   THESISTRACE_JOB_MODE=external docker compose --profile scale up --build
+  # The API then only enqueues; this container runs the workers and the retention
+  # janitor. Both share the SQLite queue in ./.data, so use a Linux host (SQLite WAL
+  # does not work reliably across Docker Desktop bind mounts shared by two containers).
+  worker:
+    profiles: ["scale"]
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: ["python", "-m", "api.jobs.worker"]
+    environment:
+      HF_HOME: /models/hf
+      THESISTRACE_DATA_DIR: /data
+      THESISTRACE_JOB_MODE: external
+      THESISTRACE_JOB_WORKERS: ${THESISTRACE_JOB_WORKERS:-1}
+      THESISTRACE_JOB_MAX_QUEUE: ${THESISTRACE_JOB_MAX_QUEUE:-20}
+      THESISTRACE_UPLOAD_TTL_SECONDS: ${THESISTRACE_UPLOAD_TTL_SECONDS:-3600}
+      THESISTRACE_RESULT_TTL_SECONDS: ${THESISTRACE_RESULT_TTL_SECONDS:-86400}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LOW_RAM: ${LOW_RAM:-0}
+      SEMANTIC: ${SEMANTIC:-0}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./.data/hf:/models/hf
+      - ./.data:/data
+    stop_grace_period: 30s
     restart: unless-stopped
 
   web:

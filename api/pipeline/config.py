@@ -13,7 +13,6 @@ from pathlib import Path
 # repo root: api/pipeline/config.py -> api/pipeline -> api -> repo
 ROOT = Path(__file__).resolve().parents[2]
 
-
 _TRUE = {"1", "true", "yes", "on"}
 
 
@@ -35,6 +34,15 @@ def _env(name: str, default: str = "") -> str:
 
 def _env_flag(name: str, default: str = "0") -> bool:
     return _env(name, default).strip().lower() in _TRUE
+
+
+def _env_number(name: str, default: float, minimum: float, cast=int):
+    """Numeric env var; a missing, malformed or too-small value falls back safely."""
+    try:
+        value = cast(_env(name, str(default)).strip())
+    except (TypeError, ValueError):
+        return cast(default)
+    return value if value >= minimum else cast(minimum)
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +69,25 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 MAX_UPLOAD_MB = int(_env("MAX_UPLOAD_MB", "30"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 MAX_PAGES = int(_env("MAX_PAGES", "60"))
+
+# ---------------------------------------------------------------------------
+# Job queue and retention (api/jobs)
+# ---------------------------------------------------------------------------
+# inline   -> the API process runs the worker threads (one command, laptop-friendly)
+# external -> the API only enqueues; run `python -m api.jobs.worker` as separate process(es)
+JOB_DB = Path(_env("JOB_DB", str(DATA_DIR / "jobs.sqlite3"))).expanduser()
+JOB_MODE = _env("JOB_MODE", "inline").strip().lower()
+if JOB_MODE not in {"inline", "external"}:
+    JOB_MODE = "inline"
+JOB_WORKERS = _env_number("JOB_WORKERS", 1, 1)
+JOB_MAX_QUEUE = _env_number("JOB_MAX_QUEUE", 20, 1)            # queued + running
+JOB_MAX_ATTEMPTS = _env_number("JOB_MAX_ATTEMPTS", 2, 1)       # only for crashed workers
+JOB_LEASE_SECONDS = _env_number("JOB_LEASE_SECONDS", 90.0, 5.0, float)
+JOB_TIMEOUT_SECONDS = _env_number("JOB_TIMEOUT_SECONDS", 900.0, 10.0, float)
+UPLOAD_TTL_SECONDS = _env_number("UPLOAD_TTL_SECONDS", 3600, 0)      # delete the file after this
+RESULT_TTL_SECONDS = _env_number("RESULT_TTL_SECONDS", 86400, 60)    # delete the whole job after this
+CLEANUP_INTERVAL_SECONDS = _env_number("CLEANUP_INTERVAL_SECONDS", 300.0, 1.0, float)
+JOB_MAX_STORED = _env_number("JOB_MAX_STORED", 200, 1)         # cap on finished jobs kept
 
 # Keep Hugging Face downloads inside the project even in local (non-Docker) runs.
 # Docker already sets HF_HOME=/models/hf; setdefault respects that.
@@ -120,4 +147,8 @@ def public_config() -> dict:
         "semantic": SEMANTIC,
         "max_upload_mb": MAX_UPLOAD_MB,
         "tokenizer_study": TOKENIZER_STUDY_ENABLED,
+        "retention": {
+            "upload_minutes": round(UPLOAD_TTL_SECONDS / 60),
+            "result_hours": round(RESULT_TTL_SECONDS / 3600, 1),
+        },
     }
