@@ -42,7 +42,7 @@ export default function ReportTab({ analysis }) {
       link.remove();
       return;
     }
-    downloadBlob(markdown, "paper2reality-report.md");
+    downloadBlob(markdown, "thesistrace-report.md");
   }
 
   if (!markdown) {

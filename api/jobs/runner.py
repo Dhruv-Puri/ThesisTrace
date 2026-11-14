@@ -24,7 +24,7 @@ from typing import Any
 from api.pipeline.analyze import analyze_document
 from api.pipeline.ingest import IngestError
 
-logger = logging.getLogger("paper2reality.jobs")
+logger = logging.getLogger("thesistrace.jobs")
 
 MAX_JOBS = 40
 

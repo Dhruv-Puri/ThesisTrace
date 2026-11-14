@@ -1,6 +1,6 @@
 # Concepts Used ↔ CSR322 Syllabus Mapping
 
-Every NLP concept in Paper2Reality is mapped to (a) a **syllabus block**, (b) a **course
+Every NLP concept in ThesisTrace is mapped to (a) a **syllabus block**, (b) a **course
 outcome**, and (c) at least one of the **8 prescribed practicals**. Use this file in the
 viva and in the project report's "syllabus alignment" section.
 
@@ -19,7 +19,7 @@ your faculty which heading maps to which Unit number for your answer sheet, or c
 
 ---
 
-## Table A — Concept → Where it is used in Paper2Reality → Syllabus block
+## Table A — Concept → Where it is used in ThesisTrace → Syllabus block
 
 | # | Concept (syllabus wording) | Used in our build | Syllabus block |
 |---|---------------------------|-------------------|----------------|
@@ -73,7 +73,7 @@ your faculty which heading maps to which Unit number for your answer sheet, or c
 Practicals 3/5/6/7 have a working code path, but their formal comparison/metric runs
 remain Phase D tasks (see [Progress.md](Progress.md)).
 
-| # | Prescribed practical (syllabus wording) | Where Paper2Reality satisfies it |
+| # | Prescribed practical (syllabus wording) | Where ThesisTrace satisfies it |
 |---|------------------------------------------|----------------------------------|
 | 1 | Explore and compare different tokenization techniques including BPE and Sentence Piece | Task A3: same paper tokenized by BPE (GPT-2 HF), WordPiece (BERT), SentencePiece (T5); table of vocab sizes, OOV behavior, token counts on scientific terms |
 | 2 | Use Hugging Face tokenizers and transformer models for basic NLP tasks | Whole pipeline: `AutoTokenizer` + `pipeline` for NER, summarization, NLI (tasks A6, A7, B3) |

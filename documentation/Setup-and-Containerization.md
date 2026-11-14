@@ -1,4 +1,4 @@
-# Setup & Containerization — Paper2Reality
+# Setup & Containerization — ThesisTrace
 
 **Policy (non-negotiable):** nothing is installed globally on anyone's machine.
 Everything runs either **inside Docker** (recommended) or inside a **project-local
@@ -19,7 +19,7 @@ except the Docker images themselves (removed with the command in §3).
 *(`docker --version` >= 24 with compose v2 — `docker compose version`.)*
 
 ```bash
-git clone <repo> && cd paper2reality
+git clone <repo> && cd ThesisTrace
 cp .env.example .env        # optional: paste GEMINI_API_KEY; empty = fully local mode
 docker compose up --build
 # web UI  -> http://localhost:8080
@@ -73,7 +73,7 @@ shell; if you did, tell the team (fix: recreate `.venv`).
 
 Both are **bind mounts inside this repository**, not Docker named volumes, so there is
 no hidden state elsewhere. Locally (without Docker) the API uses the same `.data/uploads`
-default; set `P2R_DATA_DIR` only if you deliberately want another path — remember that
+default; set `THESISTRACE_DATA_DIR` only if you deliberately want another path — remember that
 points outside the project. Deleting `.data/` removes every upload, result and model this
 project downloaded.
 
@@ -121,3 +121,10 @@ files outside this repository · database servers (we don't need one) · adminis
 commands. The containers themselves run as a non-root user after the entrypoint fixes
 ownership of the bind-mounted `.data/` folders. If a future feature seems to need
 anything on this list, it needs a new container instead.
+
+
+## Environment variable names
+
+Configuration variables use the `THESISTRACE_` prefix (for example `THESISTRACE_DATA_DIR`,
+`THESISTRACE_MAX_UPLOAD_MB`). The pre-rename `P2R_` prefix is still read as a fallback, so an
+existing `.env` keeps working; when both are set, `THESISTRACE_` wins.

@@ -1,6 +1,6 @@
 """Single source of truth for configuration.
 
-Nothing here writes outside the project unless P2R_DATA_DIR explicitly points
+Nothing here writes outside the project unless THESISTRACE_DATA_DIR explicitly points
 elsewhere (Docker sets it to the mounted volume).  Model names are never hardcoded
 in pipeline stages - change a model here and every stage follows.
 """
@@ -14,8 +14,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+_TRUE = {"1", "true", "yes", "on"}
+
+
 def _flag(name: str, default: str = "0") -> bool:
-    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+    return os.getenv(name, default).strip().lower() in _TRUE
+
+
+def _env(name: str, default: str = "") -> str:
+    """Read ``THESISTRACE_<name>``; fall back to the legacy ``P2R_<name>`` (pre-rename).
+
+    Existing ``.env`` files and Docker setups that still use the old ``P2R_`` prefix keep
+    working; the new prefix wins when both are set.
+    """
+    value = os.getenv(f"THESISTRACE_{name}")
+    if value is None:
+        value = os.getenv(f"P2R_{name}")
+    return value if value is not None else default
+
+
+def _env_flag(name: str, default: str = "0") -> bool:
+    return _env(name, default).strip().lower() in _TRUE
 
 
 # ---------------------------------------------------------------------------
@@ -23,9 +42,9 @@ def _flag(name: str, default: str = "0") -> bool:
 # ---------------------------------------------------------------------------
 LOW_RAM = _flag("LOW_RAM")                 # small models / gazetteer-only NER
 SEMANTIC = _flag("SEMANTIC")               # optional embedding rerank
-TOKENIZER_STUDY_ENABLED = _flag("P2R_TOKENIZER_STUDY", "1")
-LLM_CLAIMS_ENABLED = _flag("P2R_LLM_CLAIMS", "1")
-LLM_REPORT_ENABLED = _flag("P2R_LLM_REPORT", "0")
+TOKENIZER_STUDY_ENABLED = _env_flag("TOKENIZER_STUDY", "1")
+LLM_CLAIMS_ENABLED = _env_flag("LLM_CLAIMS", "1")
+LLM_REPORT_ENABLED = _env_flag("LLM_REPORT", "0")
 
 # Gemini is optional.  With no key the whole app still works locally.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
@@ -37,11 +56,11 @@ GEMINI_CHAT_TIMEOUT = float(os.getenv("GEMINI_CHAT_TIMEOUT", "30"))
 # ---------------------------------------------------------------------------
 # Storage - project-local by default, so deleting the folder removes everything
 # ---------------------------------------------------------------------------
-DATA_DIR = Path(os.getenv("P2R_DATA_DIR", str(ROOT / ".data"))).expanduser()
+DATA_DIR = Path(_env("DATA_DIR", str(ROOT / ".data"))).expanduser()
 UPLOAD_DIR = DATA_DIR / "uploads"
-MAX_UPLOAD_MB = int(os.getenv("P2R_MAX_UPLOAD_MB", "30"))
+MAX_UPLOAD_MB = int(_env("MAX_UPLOAD_MB", "30"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
-MAX_PAGES = int(os.getenv("P2R_MAX_PAGES", "60"))
+MAX_PAGES = int(_env("MAX_PAGES", "60"))
 
 # Keep Hugging Face downloads inside the project even in local (non-Docker) runs.
 # Docker already sets HF_HOME=/models/hf; setdefault respects that.
@@ -50,12 +69,12 @@ os.environ.setdefault("HF_HOME", str(DATA_DIR / "hf"))
 # ---------------------------------------------------------------------------
 # Models (CPU-friendly; see documentation/Feasibility-Analysis.md section 3)
 # ---------------------------------------------------------------------------
-NER_MODEL = "" if LOW_RAM else os.getenv(
-    "P2R_NER_MODEL",
+NER_MODEL = "" if LOW_RAM else _env(
+    "NER_MODEL",
     "elastic/distilbert-base-uncased-finetuned-conll03-english",
 )
-NLI_MODEL = os.getenv(
-    "P2R_NLI_MODEL",
+NLI_MODEL = _env(
+    "NLI_MODEL",
     "distilbert-base-uncased-mnli" if LOW_RAM else "cross-encoder/nli-deberta-v3-small",
 )
 SUMMARIZER_MODEL = "google/flan-t5-small" if LOW_RAM else "sshleifer/distilbart-cnn-12-6"

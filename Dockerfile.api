@@ -1,4 +1,4 @@
-# Paper2Reality API + NLP engine
+# ThesisTrace API + NLP engine
 # Everything (python, deps, spacy model) is installed INSIDE this image —
 # nothing touches the host machine. Model weights and uploads are bind-mounted
 # from the project's .data/ folder, so deleting the repo removes all of it.
@@ -6,7 +6,7 @@ FROM python:3.11-slim
 
 # Hugging Face weights land in /models/hf (host: .data/hf).
 ENV HF_HOME=/models/hf \
-    P2R_DATA_DIR=/data \
+    THESISTRACE_DATA_DIR=/data \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 

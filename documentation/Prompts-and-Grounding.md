@@ -1,4 +1,4 @@
-# Prompts & Grounding — Paper2Reality
+# Prompts & Grounding — ThesisTrace
 
 Covers **CO2** (why prompting works), **CO3** (model-agnostic prompt design),
 **CO4** (hallucination & prompt-injection failure modes), **CO5** (RAG grounding).

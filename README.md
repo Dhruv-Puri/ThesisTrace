@@ -1,4 +1,6 @@
-# Paper2Reality
+# ThesisTrace
+
+> Formerly named *Paper2Reality*. Repository: <https://github.com/Dhruv-Puri/ThesisTrace>.
 
 **From a research paper to evidence, readiness, and a real-world roadmap.**
 

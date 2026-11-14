@@ -1,4 +1,4 @@
-# Evaluation Plan — Paper2Reality
+# Evaluation Plan — ThesisTrace
 
 Satisfies **Practical 6**: *"Evaluate NLP models using standard metrics and perform
 error analysis"* — plus the measurement story for **CO4** (failure modes) and **CO6**

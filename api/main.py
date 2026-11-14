@@ -1,4 +1,4 @@
-"""Paper2Reality API.
+"""ThesisTrace API.
 
 Routes (documentation/Architecture.md section 4):
     GET  /api/health
@@ -32,7 +32,7 @@ from api import __version__
 from api.jobs import runner
 from api.pipeline import PIPELINE_VERSION, chat, config, llm, models
 
-logger = logging.getLogger("paper2reality.api")
+logger = logging.getLogger("thesistrace.api")
 
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
 _CORS_ORIGINS = [
@@ -80,7 +80,7 @@ def _safe_download_name(title: str) -> str:
 async def lifespan(_: FastAPI):
     config.ensure_dirs()
     logger.info(
-        "Paper2Reality API ready | data=%s | gemini=%s | low_ram=%s",
+        "ThesisTrace API ready | data=%s | gemini=%s | low_ram=%s",
         config.DATA_DIR,
         bool(config.GEMINI_API_KEY),
         config.LOW_RAM,
@@ -89,7 +89,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Paper2Reality API",
+    title="ThesisTrace API",
     version=__version__,
     description="Research-to-commercialization intelligence: evidence-cited paper analysis.",
     lifespan=lifespan,
@@ -138,7 +138,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 @app.get("/")
 async def root():
     return {
-        "name": "Paper2Reality",
+        "name": "ThesisTrace",
         "version": __version__,
         "health": "/api/health",
         "docs": "/docs",

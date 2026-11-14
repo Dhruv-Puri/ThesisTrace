@@ -1,4 +1,4 @@
-# Paper2Reality — one command runs the whole system:
+# ThesisTrace — one command runs the whole system:
 #   docker compose up --build
 # web UI → http://localhost:8080   API → http://localhost:8000/api/health
 #
@@ -15,7 +15,7 @@ services:
       - "8001:8000"
     environment:
       HF_HOME: /models/hf
-      P2R_DATA_DIR: /data                 # host: ./.data (project-local)
+      THESISTRACE_DATA_DIR: /data                 # host: ./.data (project-local)
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}   # from .env; empty = fully local mode
       LOW_RAM: ${LOW_RAM:-0}
       SEMANTIC: ${SEMANTIC:-0}

@@ -1,4 +1,4 @@
-# Progress Tracker — Paper2Reality
+# Progress Tracker — ThesisTrace
 
 **Sprint length:** 4 weeks (3–4 weeks until submission)
 **Roles (3 members):** P1 = NLP core · P2 = FastAPI backend + jobs · P3 = React frontend + docs/evaluation
