@@ -87,3 +87,59 @@ comparison *is* the practical.
 - Re-run after any model/threshold change; commit `eval/results/` (small JSON).
 - Never report a metric without its sample size (N) and, for hand-labeled sets, the
   labeling protocol from section 2.
+
+
+## 8. TRL detection (v2 rubric)
+
+Implementation: `api/pipeline/trl.py`. Harness: `eval/run_trl_eval.py` with labels in
+`eval/gold/trl_gold.json` and texts in `eval/corpus/`.
+
+**What changed from v1 and why** (each item was reproduced on a probe paper first):
+
+| Problem in v1 | Fix |
+|---|---|
+| "real-world datasets" / "large-scale ImageNet" read as a relevant environment (TRL 5) | patterns require an environment noun (deployment, setting, users, testbed...) |
+| "certified robustness" read as certification (TRL 8) | certification patterns need a body/standard (FDA, ISO, regulatory approval...) |
+| one "not"/"will" anywhere dropped the whole sentence, so a baseline was lost and a deployed system scored TRL 3 | negation/hedging checked only in the clause around the match |
+| "can be deployed in production" counted as TRL 7 | modal/future/hedge words reject environment signals |
+| "Smith et al. deployed ..." counted for the authors | citations and non-first-person sentences rejected for environment signals |
+| baseline required for every level above 3 | two tracks: evaluation (1-4) and environment (5-9); environment needs an experiment, not a baseline |
+| "we survey 200 students" capped as a literature review | review detector needs literature words and no human-subject words |
+| related work, future work, limitations, references could supply evidence | section roles; those roles never count, introductions only count for problem/method |
+
+**New outputs:** `confidence` (low/medium/high), `level_range`, `near_misses` (mentions that were
+ignored and why), `nli_checked`. With `use_nli=True`, level 5+ evidence sentences are
+confirmed with the ClaimCheck NLI cross-encoder (entailment >= 0.5); with no model the regex
+result stands.
+
+**Honest status:** the 8 seed cases are *synthetic and labelled by the developer who wrote the
+rules*, so 100 % agreement on them is a regression guard, not an accuracy estimate. The real
+number needs 15-30 papers labelled by two independent raters, reported with N, exact, within-1
+and MAE (`python eval/run_trl_eval.py`). The NLI path is covered by unit tests with a fake
+scorer; run `--nli` inside Docker to measure it with the real model.
+
+
+## 9. Software-readiness artifacts as TRL evidence
+
+Implementation: `api/pipeline/artifacts.py` (shared scoping helpers in `api/pipeline/scope.py`).
+
+The detector reads what the paper *states* it ships (it never fetches links or runs code) and
+classifies ten artifact types with a page citation: released source, installable package,
+container image, API/SDK/service, live demo, versioned release, tests/CI, documentation,
+open licence, and reported adoption. Each is `available`, `promised` or absent.
+
+* Only statements about the authors' own system count. Links in references or related work,
+  third-party code ("we build on ... github.com/..."), citations ("Smith et al. [12]") and
+  negated sentences are rejected. Title-block and footnote links on page 1 are read, because
+  section detection drops text before the first heading.
+* `promised` artifacts ("will be released upon acceptance", "on request") never count; they
+  appear as a near miss and widen the plausible range by one level.
+* `level_hint` is a conservative software-TRL heuristic: released source + an installable or
+  hosted form + at least three artifact types -> TRL 5; plus a hosted/API form, an installable
+  form and four types -> TRL 6. Artifacts never reach TRL 7+ on their own (that needs
+  deployment evidence) and are ignored when the paper has no experimental evaluation.
+* TRL evidence pages are now the page the sentence is on, not the page its section starts on.
+
+Known gaps: a repository link is stated, not verified (links may be dead); "reported adoption"
+is self-reported and is displayed but not used for the level; non-software technologies
+(hardware, medical) have no equivalent artifacts yet.

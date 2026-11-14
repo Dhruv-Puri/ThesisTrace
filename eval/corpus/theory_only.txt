@@ -1,0 +1,10 @@
+On the Expressivity of Sparse Routing Networks
+
+Abstract
+We study the expressive power of sparse routing networks and prove an approximation bound.
+
+1. Introduction
+The problem of characterising sparse routing remains open.
+
+2. Method
+We introduce a formal model of routing and derive a lower bound on width.

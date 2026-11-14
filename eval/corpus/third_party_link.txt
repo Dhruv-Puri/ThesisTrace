@@ -1,0 +1,10 @@
+Distilling Retrieval Models
+
+Abstract
+We propose a distillation recipe and evaluate it on a retrieval benchmark.
+
+1. Method
+We build on the implementation at https://github.com/facebookresearch/fairseq and adapt it for retrieval. We use a pip install of the official baseline.
+
+2. Experiments
+We evaluate on MS MARCO. Our model outperforms the baseline.

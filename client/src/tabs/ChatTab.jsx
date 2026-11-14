@@ -9,9 +9,9 @@ export const NO_KEY_NOTICE =
 
 const STARTERS = [
   "What problem does this paper solve?",
-  "What datasets and metrics does it use?",
-  "What are the main limitations?",
-  "How would I reproduce the main result?",
+  "Which claims are supported, and by what evidence?",
+  "Why did it get this TRL, and what would raise it?",
+  "What is missing to reproduce the main result?",
 ];
 
 const MAX_HISTORY = 6;
@@ -45,7 +45,13 @@ export function useChat(jobId) {
       const reply = await askPaper(jobId, question, history);
       commit([
         ...live.current.messages,
-        { role: "assistant", content: reply.answer, sources: reply.sources || [] },
+        {
+          role: "assistant",
+          content: reply.answer,
+          sources: reply.sources || [],
+          findings: reply.findings || [],
+          paperText: reply.paper_text_available !== false,
+        },
       ]);
     } catch (error) {
       commit([
@@ -65,23 +71,51 @@ export function useChat(jobId) {
   return { messages, pending, send, clear };
 }
 
-function Sources({ sources }) {
-  if (!sources?.length) return null;
-  const cited = sources.filter((source) => source.cited).length;
+function Sources({ sources, findings, paperText }) {
+  const hasSources = Boolean(sources?.length);
+  const hasFindings = Boolean(findings?.length);
+  if (!hasSources && !hasFindings && paperText !== false) return null;
+  const citedPassages = (sources || []).filter((source) => source.cited).length;
+  const citedFindings = (findings || []).filter((finding) => finding.cited).length;
   return (
-    <details className="chat-sources">
-      <summary>
-        {sources.length} passage{sources.length === 1 ? "" : "s"} retrieved · {cited} cited
-      </summary>
-      <ol>
-        {sources.map((source) => (
-          <li key={source.id} className={source.cited ? "is-cited" : ""}>
-            <span className="cite">[p.{source.page}]</span>
-            {source.section ? <em> {source.section}</em> : null} — {source.text}
-          </li>
-        ))}
-      </ol>
-    </details>
+    <>
+      {paperText === false ? (
+        <p className="fine-print">
+          The uploaded paper has been deleted from the server, so this answer uses the saved
+          analysis only (no paper passages).
+        </p>
+      ) : null}
+      {hasFindings ? (
+        <details className="chat-sources">
+          <summary>
+            {findings.length} pipeline finding{findings.length === 1 ? "" : "s"} used · {citedFindings} cited
+          </summary>
+          <ol>
+            {findings.map((finding) => (
+              <li key={finding.id} className={finding.cited ? "is-cited" : ""}>
+                <span className="cite">[{finding.id}]</span>
+                <em> {finding.label}</em> — {finding.text}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+      {hasSources ? (
+        <details className="chat-sources">
+          <summary>
+            {sources.length} passage{sources.length === 1 ? "" : "s"} retrieved · {citedPassages} cited
+          </summary>
+          <ol>
+            {sources.map((source) => (
+              <li key={source.id} className={source.cited ? "is-cited" : ""}>
+                <span className="cite">[p.{source.page}]</span>
+                {source.section ? <em> {source.section}</em> : null} — {source.text}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+    </>
   );
 }
 
@@ -122,7 +156,7 @@ export default function ChatTab({ analysis, geminiEnabled, chat }) {
       <section className="panel chat-panel">
         <div className="panel-head">
           <div>
-            <p className="kicker">Grounded Q&amp;A · retrieval first, Gemini writes the answer</p>
+            <p className="kicker">Grounded Q&amp;A · pipeline findings + retrieved passages, Gemini writes the answer</p>
             <h2>Ask the paper</h2>
           </div>
           {messages.length && !disabled ? (
@@ -142,7 +176,10 @@ export default function ChatTab({ analysis, geminiEnabled, chat }) {
         <div className="chat-log" ref={logRef} aria-live="polite">
           {!messages.length && !disabled ? (
             <div className="chat-empty">
-              <p>Ask anything about this paper. Answers cite the pages they came from.</p>
+              <p>
+                Ask anything about this paper. Answers cite the pipeline findings
+                ([F#]) and the pages ([p.N]) they came from.
+              </p>
               <div className="chat-starters">
                 {STARTERS.map((starter) => (
                   <button
@@ -170,7 +207,13 @@ export default function ChatTab({ analysis, geminiEnabled, chat }) {
               ) : (
                 <p className="chat-plain">{message.content}</p>
               )}
-              {message.role === "assistant" ? <Sources sources={message.sources} /> : null}
+              {message.role === "assistant" ? (
+                <Sources
+                  sources={message.sources}
+                  findings={message.findings}
+                  paperText={message.paperText}
+                />
+              ) : null}
             </div>
           ))}
 
@@ -204,9 +247,10 @@ export default function ChatTab({ analysis, geminiEnabled, chat }) {
       </section>
 
       <p className="syllabus-note">
-        <span>CSR322 link</span> RAG grounding (CO5): TF-IDF retrieves passages from the
-        paper, only those passages reach Gemini, and any page citation that does not match a
-        retrieved passage is removed before you see it.
+        <span>CSR322 link</span> RAG grounding (CO5): the app&rsquo;s own claim verdicts, TRL
+        result and reproducibility checks, plus TF-IDF passages from the paper, are all
+        Gemini sees. It relays verdicts and never assigns them, and any [F#] or [p.N] citation
+        that does not match what it was given is removed before you see it.
       </p>
     </div>
   );

@@ -156,3 +156,41 @@ residual rate.
 | `evidence_note.txt` | 8 verdict note | Gemini | No (template note) |
 | `eli5.txt` | 5 summary | local T5 first, Gemini optional | No |
 | `report.txt` | 11 report | Gemini | No (template) |
+
+## Chat grounding in the pipeline outputs ("findings")
+
+The Ask tab (`api/pipeline/chat.py`) answers from **two** kinds of context, both treated as data:
+
+| Context | Built by | Cited as |
+|---|---|---|
+| **Pipeline findings** - the app's own results for this paper | `chat_findings.build_findings` | `[F3]` |
+| **Paper passages** - TF-IDF retrieval over the paper's sentences | `evidence.SentenceIndex` | `[p.4]` |
+
+Findings are one short, id'd statement per pipeline output: document facts, the pipeline summary,
+the TRL result (level, confidence, plausible range, evidence quotes, *near misses*, software
+artifacts), a claim-check summary plus one finding per claim (verdict, confidence, the top
+evidence passages with pages and NLI label), the reproducibility score plus one finding per
+checklist item, extracted datasets/models/metrics, regex-extracted numbers and links, and the
+analysis caveats.
+
+How it stays grounded:
+
+* **Relay, never judge.** The system prompt tells Gemini that findings are authoritative and that it
+  must never assign, change, upgrade or soften a verdict, TRL level or score; "insufficient" is
+  relayed as "not supported by the retrieved text", not as "false". The model cannot be forced to
+  obey, so the citation check below is what the UI relies on.
+* **Selection.** Findings share about 45 % of the prompt budget. A question is matched to
+  findings by TF-IDF *and* by topic routing (e.g. "ready for production?" pulls the TRL findings
+  although they share no word with it). Small talk only gets the document/summary overview.
+* **Citation enforcement.** After generation, every `[F#]` and `[p.N]` tag that was not in the
+  prompt is removed (a finding's quoted evidence pages count as valid). The response lists which
+  findings and passages were cited, and the UI shows them.
+* **Injection safety.** Findings contain text copied from the paper, so any finding with an
+  instruction-like line is dropped before prompting.
+* **Works after the upload is deleted.** The retention policy removes uploaded files after
+  `THESISTRACE_UPLOAD_TTL_SECONDS`. The saved analysis still grounds answers from the findings
+  (`paper_text_available: false`), instead of failing as before.
+
+Limits: the model could still misstate a finding without citing it; the check only catches tags
+that do not match the prompt. Findings summarise rather than replace the evaluation of whether
+the verdicts themselves are right (see `Evaluation.md`).
