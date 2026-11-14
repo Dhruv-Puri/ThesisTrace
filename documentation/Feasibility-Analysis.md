@@ -1,4 +1,4 @@
-# Feasibility Analysis — Paper2Reality
+# Feasibility Analysis — ThesisTrace
 
 **Verdict: FEASIBLE** for a beginner-to-intermediate NLP team of 3, in 3–4 weeks, on
 laptops without GPUs, at 0 INR cost — *if* the scope cuts in section 1 are respected.

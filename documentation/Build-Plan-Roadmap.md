@@ -1,4 +1,4 @@
-# Build Plan & Roadmap — Paper2Reality
+# Build Plan & Roadmap — ThesisTrace
 
 **Duration:** 4 weeks (aggressive; compress by dropping stretch items, never the spine)
 **Team:** 3 members — P1 NLP core · P2 backend/Docker · P3 frontend/docs/eval

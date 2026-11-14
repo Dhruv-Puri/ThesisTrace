@@ -88,7 +88,7 @@ function Landing({ onFile, onDemo, busy }) {
             to <span className="hl">evidence</span>.
           </h1>
           <p className="lede">
-            Upload a research paper. Paper2Reality explains what it does, extracts the key
+            Upload a research paper. ThesisTrace explains what it does, extracts the key
             concepts, checks whether its claims survive its own evidence, scores technology
             readiness, and shows what still stands between the lab and the real world.
           </p>
@@ -292,7 +292,7 @@ function Dashboard({ analysis, onReset, geminiEnabled }) {
       </div>
 
       <footer className="dashboard-foot">
-        <span>Paper2Reality · CSR322</span>
+        <span>ThesisTrace · CSR322</span>
         <span>pipeline {analysis.pipeline_version || "—"} · {analysis.engine?.tfidf || "TF-IDF"} · {analysis.engine?.gemini ? "Gemini optional" : "fully local"}</span>
       </footer>
     </main>
@@ -398,7 +398,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <button type="button" className="wordmark" onClick={reset} aria-label="Paper2Reality home">
+        <button type="button" className="wordmark" onClick={reset} aria-label="ThesisTrace home">
           Paper<span className="wordmark-arrow">→</span>Reality
         </button>
         <div className="topbar-right">
@@ -447,7 +447,7 @@ export default function App() {
       ) : null}
 
       <footer className="site-footer">
-        <span>Paper2Reality · research-to-commercialization intelligence</span>
+        <span>ThesisTrace · research-to-commercialization intelligence</span>
         <span>CSR322 project · local-first · ₹0 to run</span>
       </footer>
     </div>

@@ -173,7 +173,7 @@ def analyze_document(
         tokenization = {
             "tokenizers": [],
             "term_splits": [],
-            "note": "Tokenizer study disabled (P2R_TOKENIZER_STUDY=0).",
+            "note": "Tokenizer study disabled (THESISTRACE_TOKENIZER_STUDY=0).",
         }
     timings["tokenizer_ms"] = _elapsed(t0)
     if progress:

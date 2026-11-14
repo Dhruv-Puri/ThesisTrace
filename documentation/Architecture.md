@@ -1,4 +1,4 @@
-# System Architecture — Paper2Reality
+# System Architecture — ThesisTrace
 
 ## 1. High-level diagram
 

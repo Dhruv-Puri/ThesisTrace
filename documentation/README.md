@@ -1,9 +1,9 @@
-# Paper2Reality — Documentation Hub
+# ThesisTrace — Documentation Hub
 
 > **From a research paper to evidence, readiness, and a real-world roadmap.**
 > Course project for **CSR322: Natural Language Processing** (Session 2026-27, Credits 3, L:2 T:0 P:2).
 
-Upload a research paper, patent, or technical report → Paper2Reality explains what it
+Upload a research paper, patent, or technical report → ThesisTrace explains what it
 does, extracts the key concepts, checks whether the paper's own claims are supported by
 its own evidence, scores technology readiness (TRL 1–9) with cited evidence, and lists
 what still needs to happen to turn the research into a real-world product.
@@ -35,7 +35,7 @@ top (never the other way around).
 ## Repository map (target state)
 
 ```
-paper2reality/
+ThesisTrace/
 ├── documentation/          ← you are here (all design docs)
 ├── api/                    FastAPI backend + NLP engine
 │   ├── main.py             app entrypoint (routes)
