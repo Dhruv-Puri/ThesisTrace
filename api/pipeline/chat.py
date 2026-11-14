@@ -1,8 +1,19 @@
 """Grounded Q&A over one uploaded paper (CO5 - RAG grounding).
 
-question -> TF-IDF retrieval over the paper's own sentence index -> Gemini writes an
-answer from *only* those passages -> any ``[p.N]`` citation that does not match a
-retrieved page is removed.
+question -> two kinds of context:
+
+* **Pipeline findings** (``chat_findings``): the app's own outputs for this paper -
+  claim verdicts with their evidence, the TRL result, the reproducibility checklist,
+  extracted datasets/metrics, the summary and caveats - cited as ``[F3]``.
+* **Paper passages**: TF-IDF retrieval over the paper's own sentence index, cited as
+  ``[p.N]``.
+
+Gemini writes the answer from *only* that context and must relay findings as given
+(it never assigns or changes a verdict, TRL or score).  Afterwards any ``[p.N]`` or
+``[F#]`` tag that does not match what was actually in the prompt is removed.
+
+If the uploaded file has already been deleted by the retention policy, the answer is
+still grounded in the stored pipeline findings (the response says so).
 
 This reuses the same retrieval layer as ClaimCheck (``evidence.SentenceIndex``), so
 instruction-like sentences are already excluded from what the model sees.  Gemini is
@@ -18,7 +29,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 from .. import prompts
-from . import config, evidence, ingest, llm
+from . import chat_findings, config, evidence, ingest, llm
 from .textutils import clip, strip_control_chars, word_tokens
 
 NO_KEY_MESSAGE = (
@@ -34,6 +45,12 @@ ABSTRACT_PASSAGES = 4
 CACHE_SIZE = 8
 
 _CITATION = re.compile(r"\[p\.(\d+)\]")
+_FINDING_CITATION = re.compile(r"\[F(\d+)\]")
+_MISSING_PAPER_CODES = {"FILE_NOT_FOUND", "PAPER_UNAVAILABLE"}
+NO_PAPER_TEXT = (
+    "(The original paper text is no longer stored on the server. Answer only from the "
+    "pipeline findings above and say that the paper's own passages are unavailable.)"
+)
 _ABSTRACT_SECTION = re.compile(r"abstract", re.I)
 
 _CACHE: "OrderedDict[str, tuple[evidence.SentenceIndex, str]]" = OrderedDict()
@@ -102,7 +119,7 @@ def _retrieval_query(question: str, history: list[dict]) -> str:
     return f"{previous[-1]} {question}" if previous else question
 
 
-def _select_passages(index: evidence.SentenceIndex, query: str) -> list[dict]:
+def _select_passages(index: evidence.SentenceIndex, query: str, budget: int | None = None) -> list[dict]:
     chosen: list[dict] = []
     seen: set[int] = set()
 
@@ -124,7 +141,7 @@ def _select_passages(index: evidence.SentenceIndex, query: str) -> list[dict]:
         seen.add(int(hit["id"]))
 
     # Respect the shared prompt budget.
-    budget = config.MAX_CONTEXT_CHARS
+    budget = config.MAX_CONTEXT_CHARS if budget is None else budget
     kept: list[dict] = []
     for passage in chosen:
         cost = len(passage["text"]) + 16
@@ -153,34 +170,58 @@ def _format_history(history: list[dict]) -> str:
     )
 
 
-def _enforce_citations(answer: str, allowed_pages: set[int]) -> tuple[str, set[int], int]:
-    """Drop ``[p.N]`` tags that do not match a retrieved page."""
-    cited: set[int] = set()
+def _enforce_all(
+    answer: str, allowed_pages: set[int], allowed_findings: set[str]
+) -> tuple[str, set[int], set[str], int]:
+    """Drop ``[p.N]`` / ``[F#]`` tags that do not match what was in the prompt."""
+    cited_pages: set[int] = set()
+    cited_findings: set[str] = set()
     removed = 0
 
-    def check(match: re.Match[str]) -> str:
+    def check_page(match: re.Match[str]) -> str:
         nonlocal removed
         page = int(match.group(1))
         if page in allowed_pages:
-            cited.add(page)
+            cited_pages.add(page)
             return match.group(0)
         removed += 1
         return ""
 
-    cleaned = _CITATION.sub(check, answer)
+    def check_finding(match: re.Match[str]) -> str:
+        nonlocal removed
+        finding_id = f"F{int(match.group(1))}"
+        if finding_id in allowed_findings:
+            cited_findings.add(finding_id)
+            return match.group(0)
+        removed += 1
+        return ""
+
+    cleaned = _CITATION.sub(check_page, answer)
+    cleaned = _FINDING_CITATION.sub(check_finding, cleaned)
     cleaned = re.sub(r"[ \t]+([.,;:])", r"\1", cleaned)
     cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
-    return cleaned.strip(), cited, removed
+    return cleaned.strip(), cited_pages, cited_findings, removed
+
+
+def _enforce_citations(answer: str, allowed_pages: set[int]) -> tuple[str, set[int], int]:
+    """Page-tag-only variant kept for callers that have no pipeline findings."""
+    text, pages, _, removed = _enforce_all(answer, allowed_pages, set())
+    return text, pages, removed
 
 
 def answer(
     job_id: str,
-    path: Path,
+    path: Path | None,
     filename: str,
     question: str,
     history: list[dict] | None = None,
+    analysis: dict | None = None,
 ) -> dict:
-    """Answer one question about the paper, or raise :class:`ChatError`."""
+    """Answer one question about the paper, or raise :class:`ChatError`.
+
+    ``analysis`` is the finished job's result; it supplies the pipeline findings and
+    keeps chat working after the uploaded file has been deleted.
+    """
     if not llm.enabled():
         raise ChatError("CHAT_DISABLED", NO_KEY_MESSAGE, 503)
 
@@ -189,13 +230,33 @@ def answer(
         raise ChatError("EMPTY_QUESTION", "Type a question first.", 400)
 
     turns = _clean_history(history)
-    index, title = _load_index(job_id, path, filename)
-    passages = _select_passages(index, _retrieval_query(question, turns))
+    query = _retrieval_query(question, turns)
+
+    all_findings = chat_findings.build_findings(analysis)
+    index = None
+    title = ((analysis or {}).get("doc") or {}).get("title") or filename
+    try:
+        if path is None:
+            raise ChatError("PAPER_UNAVAILABLE", "The uploaded paper is no longer available.", 410)
+        index, title = _load_index(job_id, path, filename)
+    except ChatError as exc:
+        # The retention policy may have removed the upload; the stored analysis can still answer.
+        if not (all_findings and exc.code in _MISSING_PAPER_CODES):
+            raise
+
+    findings = chat_findings.select_findings(all_findings, query, chat_findings.findings_budget())
+    used = sum(len(f["text"]) + len(f["label"]) + 12 for f in findings)
+    passages = (
+        _select_passages(index, query, budget=max(0, config.MAX_CONTEXT_CHARS - used))
+        if index is not None
+        else []
+    )
 
     template = prompts.render(
         "chat",
         title=clip(title, 200),
-        context=_format_context(passages),
+        findings=chat_findings.format_findings(findings),
+        context=_format_context(passages) if index is not None else NO_PAPER_TEXT,
         history=_format_history(turns),
         question=question,
     )
@@ -215,7 +276,11 @@ def answer(
         raise ChatError("CHAT_LLM_FAILED", f"{exc.message}. Please try again.", status) from exc
 
     allowed = {int(passage["page"]) for passage in passages}
-    text, cited_pages, removed = _enforce_citations(raw, allowed)
+    for finding in findings:  # a finding quotes evidence pages, so those tags are valid too
+        allowed.update(int(page) for page in finding["pages"])
+    text, cited_pages, cited_findings, removed = _enforce_all(
+        raw, allowed, {finding["id"] for finding in findings}
+    )
     if not text:
         raise ChatError("CHAT_LLM_FAILED", "Gemini returned an empty answer. Please try again.", 502)
 
@@ -232,6 +297,18 @@ def answer(
             }
             for passage in passages
         ],
+        "findings": [
+            {
+                "id": finding["id"],
+                "kind": finding["kind"],
+                "label": finding["label"],
+                "text": finding["text"],
+                "pages": finding["pages"],
+                "cited": finding["id"] in cited_findings,
+            }
+            for finding in findings
+        ],
+        "paper_text_available": index is not None,
         "model": config.GEMINI_MODEL,
         "removed_citations": removed,
     }

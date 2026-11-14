@@ -305,17 +305,19 @@ def job_chat(job_id: str, body: ChatRequest):
             status_code=404,
             detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
         )
-    source = runner.get_source(job_id)
     if job["status"] == "error":
         message = (job.get("error") or {}).get("message", "The analysis failed.")
         raise HTTPException(status_code=409, detail={"code": "JOB_FAILED", "message": message})
-    if not source:
+    if job["status"] != "done":
         raise HTTPException(
             status_code=409,
             detail={"code": "JOB_NOT_READY", "message": "The analysis is still running."},
         )
 
-    path, filename = source
+    # The upload may already be deleted by the retention policy; the stored analysis
+    # (the pipeline findings) can still ground the answer.
+    source = runner.get_source(job_id)
+    path, filename = source if source else (None, job.get("filename") or "paper")
     try:
         return chat.answer(
             job_id,
@@ -323,6 +325,7 @@ def job_chat(job_id: str, body: ChatRequest):
             filename,
             body.question,
             [turn.model_dump() for turn in body.history],
+            analysis=job,
         )
     except chat.ChatError as exc:
         raise HTTPException(
