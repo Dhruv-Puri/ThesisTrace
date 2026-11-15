@@ -1,0 +1,10 @@
+A Pilot Tool for Note Taking
+
+Abstract
+We survey 200 students and propose a note-taking tool.
+
+1. Method
+We design a prototype app.
+
+2. Results
+Results show students liked it. It outperforms the paper-notes baseline. We ran a field study at three schools.

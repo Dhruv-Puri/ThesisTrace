@@ -174,7 +174,7 @@ def analyze_document(
         tokenization = {
             "tokenizers": [],
             "term_splits": [],
-            "note": "Tokenizer study disabled (P2R_TOKENIZER_STUDY=0).",
+            "note": "Tokenizer study disabled (THESISTRACE_TOKENIZER_STUDY=0).",
         }
     timings["tokenizer_ms"] = _elapsed(t0)
     if progress:
@@ -233,7 +233,9 @@ def analyze_document(
 
     # --- Stage 10: TRL -------------------------------------------------------
     t0 = time.perf_counter()
-    readiness = trl_stage.assess_trl(document, verified_claims, reproducibility)
+    readiness = trl_stage.assess_trl(
+        document, verified_claims, reproducibility, use_nli=use_nli
+    )
     timings["trl_ms"] = _elapsed(t0)
     if progress:
         progress(94, "Readiness rubric")

@@ -1,0 +1,13 @@
+Compact Keyword Spotting
+
+Abstract
+We propose a compact keyword spotting network and evaluate it on a public benchmark.
+
+1. Method
+We design a depthwise-separable architecture.
+
+2. Experiments
+We evaluate on Speech Commands. Our model outperforms the baseline by 3 points.
+
+3. Conclusion
+We plan to deploy the model in production next year. It could be used in real-world deployment on smart speakers. A field trial may follow.

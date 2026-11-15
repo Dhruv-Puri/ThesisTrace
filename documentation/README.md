@@ -1,12 +1,13 @@
-# Paper2Reality — Documentation Hub
+# ThesisTrace — Documentation Hub
 
-> **From a research paper to evidence, readiness, and a real-world roadmap.**
+> **PaperLens tells you what the literature says. ThesisTrace tells you whether to build on it.**
 > Course project for **CSR322: Natural Language Processing** (Session 2026-27, Credits 3, L:2 T:0 P:2).
 
-Upload a research paper, patent, or technical report → Paper2Reality explains what it
+Upload a research paper, patent, or technical report → ThesisTrace explains what it
 does, extracts the key concepts, checks whether the paper's own claims are supported by
 its own evidence, scores technology readiness (TRL 1–9) with cited evidence, and lists
-what still needs to happen to turn the research into a real-world product.
+what still needs to happen to turn the research into a real-world product. The same audit
+is then shown through researcher, engineer and business lenses.
 
 **This is not a paper summarizer.** It is a research-to-commercialization intelligence
 tool — and it is built as a *proper NLP pipeline* first, with the LLM layer grounded on
@@ -22,6 +23,7 @@ top (never the other way around).
 
 | # | Document | What it answers |
 |---|----------|-----------------|
+| 0 | [Overview.md](../Overview.md) | Start here: the plain-language product tour, the full upload-to-report workflow with examples, competitors, business view, FAQ, and a five-session study path |
 | 1 | [Progress.md](Progress.md) | Where are we right now? Task status, the dated "what was built so far" changelog with a verified-layer table, blockers, demo checklist |
 | 2 | [Concepts-and-Syllabus.md](Concepts-and-Syllabus.md) | Which syllabus concept does each feature use? Full mapping to Units I–VI, CO1–CO6, and all 8 practicals |
 | 3 | [Feasibility-Analysis.md](Feasibility-Analysis.md) | Can a beginner–intermediate team build this in 3–4 weeks on weak PCs? Scope cuts, risks, costs |
@@ -31,11 +33,15 @@ top (never the other way around).
 | 7 | [Evaluation.md](Evaluation.md) | Metrics, gold-standard set, error-analysis protocol (maps to Practical 6) |
 | 8 | [Build-Plan-Roadmap.md](Build-Plan-Roadmap.md) | The 4-week sprint plan with day-level tasks, roles, phase gates, future phases |
 | 9 | [Setup-and-Containerization.md](Setup-and-Containerization.md) | How to run everything with Docker (zero host installs) or a local `.venv` |
+| 10 | [Competitive-Analysis.md](Competitive-Analysis.md) | Who else is in this space (including PaperLens), where we win and lose, and how to defend the wedge |
+| 11 | [Business-Plan.md](Business-Plan.md) | Lean canvas, bottom-up sizing, pricing logic, unit economics, scenarios, kill criteria |
+| 12 | [Validation-Plan.md](Validation-Plan.md) | Interview kit, survey, three experiments with pass bars, pilot design, demo script |
+| 13 | [Production-Readiness.md](Production-Readiness.md) | Shipped vs gap, SLOs, security, runbook, deployment options, pilot checklist |
 
 ## Repository map (target state)
 
 ```
-paper2reality/
+ThesisTrace/
 ├── documentation/          ← you are here (all design docs)
 ├── api/                    FastAPI backend + NLP engine
 │   ├── main.py             app entrypoint (routes)
@@ -76,6 +82,8 @@ dashboard tabs and the landing page) and are embedded in the repository README.
 - [x] Phase A — NLP MVP **code** (Gate A needs a model-backed Docker run)
 - [x] Phase B — Evidence layer **code** (NLI path needs the Docker model cache)
 - [x] Phase C — App + Docker files (Gate C needs `docker compose up` on a clean machine)
+- [x] Differentiation pass — Trust Ledger, portfolio, UI rebuild, measured seed-set numbers
+- [x] Business documents and rebuilt pitch deck
 - [ ] Phase D — Evaluation run, error analysis, buffer, demo
 
 Track live status in [Progress.md](Progress.md).

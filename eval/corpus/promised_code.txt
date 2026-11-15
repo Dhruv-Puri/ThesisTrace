@@ -1,0 +1,13 @@
+Sparse Attention for Long Documents
+
+Abstract
+We propose a sparse attention layer and evaluate it on long-document benchmarks.
+
+1. Method
+We design a block-sparse attention pattern.
+
+2. Experiments
+We evaluate on three benchmarks. Our method outperforms the baseline.
+
+3. Conclusion
+Our code will be released upon acceptance. A pip package and documentation are planned.

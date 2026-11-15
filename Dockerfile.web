@@ -1,4 +1,4 @@
-# Paper2Reality frontend — React build (Vite) served by nginx.
+# ThesisTrace frontend — React build (Vite) served by nginx.
 # Node is used only inside this build stage; the host needs no Node install.
 
 # --- build stage ---

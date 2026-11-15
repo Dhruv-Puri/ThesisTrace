@@ -1,4 +1,4 @@
-# Paper2Reality — Python dependencies.
+# ThesisTrace — Python dependencies.
 # Installed ONLY inside Docker images or the project .venv (never globally).
 # Pin ranges loosely for 4-week student sprint; lock exact versions later if needed.
 

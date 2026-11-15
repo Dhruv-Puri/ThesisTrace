@@ -1,4 +1,4 @@
-"""NLP pipeline for Paper2Reality.
+"""NLP pipeline for ThesisTrace.
 
 The pipeline is deliberately layered the same way CSR322 teaches NLP:
 

@@ -1,0 +1,13 @@
+A Low-Cost Soil Moisture Controller
+
+Abstract
+We develop a soil moisture controller and validate it on a test bed that reproduces greenhouse operating conditions.
+
+1. Method
+We design a feedback controller and build a working prototype.
+
+2. Experiments
+We evaluate the controller on a test bed. The controller outperforms a fixed-schedule baseline.
+
+3. Results
+The prototype was tested on a test bed that reproduces greenhouse conditions.

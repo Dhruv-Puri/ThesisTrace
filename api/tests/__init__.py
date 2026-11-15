@@ -1,4 +1,4 @@
-"""Standard-library test suite for Paper2Reality.
+"""Standard-library test suite for ThesisTrace.
 
 Run from the repository root:
 

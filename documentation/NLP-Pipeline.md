@@ -1,4 +1,4 @@
-# NLP Pipeline Specification — Paper2Reality
+# NLP Pipeline Specification — ThesisTrace
 
 Stage-by-stage: what goes in, what comes out, which model, which syllabus concept, how
 long on a CPU laptop, and what to do if it fails. Read alongside

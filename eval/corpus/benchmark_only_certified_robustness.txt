@@ -1,0 +1,19 @@
+Certified Robustness for Image Classifiers
+
+Abstract
+We propose a smoothing method that gives certified robustness for image classifiers.
+
+1. Introduction
+The problem of adversarial examples limits real-world use.
+
+2. Method
+We introduce a randomized smoothing algorithm.
+
+3. Experiments
+We evaluate on large-scale ImageNet and other real-world datasets. Our method outperforms the baseline and results show certified accuracy of 61%.
+
+4. Conclusion
+The method can be deployed in production pipelines.
+
+Acknowledgments
+This work was done in collaboration with Acme Labs.

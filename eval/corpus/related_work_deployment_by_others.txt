@@ -1,0 +1,16 @@
+Efficient Graph Sampling
+
+Abstract
+We propose a graph sampling method and evaluate it on citation graphs.
+
+1. Introduction
+Smith et al. deployed a similar sampler in production at a large retailer [12]. Prior systems have been used in production for millions of users.
+
+2. Related Work
+Existing systems were deployed at several hospitals and banks.
+
+3. Method
+We design a neighbourhood sampler.
+
+4. Experiments
+We evaluate on Cora and PubMed. Our sampler outperforms the baseline sampler.

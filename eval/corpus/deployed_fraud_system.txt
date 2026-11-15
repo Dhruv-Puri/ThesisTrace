@@ -1,0 +1,13 @@
+Fraud Scoring at Scale
+
+Abstract
+We present a fraud model.
+
+1. Method
+We develop a gradient-boosted pipeline.
+
+2. Experiments
+We evaluate on a benchmark. Existing systems do not scale, and our model outperforms the baseline, which will be shown in Table 2.
+
+3. Results
+We ran a pilot deployment with a partner bank. The model was deployed in production at the bank and is used in production for 3M transactions a day.
