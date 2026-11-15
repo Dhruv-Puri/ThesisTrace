@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { CoverageRadar, EmptyState, RingGauge, TYPE_LABELS, formatNumber } from "../components/ui.jsx";
 import LensPanel from "../components/LensPanel.jsx";
+import TabHelperBanner from "../components/TabHelperBanner.jsx";
 
 const PART_LABELS = {
   term_density: "Technical terms",
@@ -100,6 +101,17 @@ export default function SummaryTab({ analysis }) {
       </section>
 
       <LensPanel analysis={analysis} />
+
+      <TabHelperBanner
+        emoji="📑"
+        title="Quick Guide: What to look for in Summary"
+        tips={[
+          "Top Glance Rings: Instantly see supported claims count, NASA readiness (TRL 1–9), and reproducibility score.",
+          "Lens Panel: Switch lenses to filter findings through specific research or engineering perspectives.",
+          "Paper in 3 Bullets: The core algorithmic problem, proposed solution, and benchmarked outcomes.",
+          "Content Coverage Radar: Visualizes lexical variety, grammar mix, and structural depth of the paper.",
+        ]}
+      />
 
       <div className="summary-grid">
         <section className="block">

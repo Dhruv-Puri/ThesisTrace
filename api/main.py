@@ -1,28 +1,25 @@
-"""ThesisTrace API.
+"""Paper2Reality API.
 
 Routes (documentation/Architecture.md section 4):
     GET  /api/health
     GET  /api/config
-    POST /api/jobs                     multipart upload -> 202 + job id (503 if the queue is full)
-    GET  /api/jobs/{job_id}            status/progress/queue position or full PaperAnalysis
-    DELETE /api/jobs/{job_id}          delete the analysis and its uploaded file
+    POST /api/jobs                     multipart upload -> 202 + job id
+    GET  /api/jobs/{job_id}            status/progress or full PaperAnalysis
     GET  /api/jobs/{job_id}/report     markdown executive report
     POST /api/jobs/{job_id}/chat       grounded Q&A over the paper (needs Gemini)
 
 Uploads are written to the project-local data directory (or the Docker volume),
-never to a system path.  The heavy work runs in queue workers (api/jobs): a durable
-SQLite queue, a bounded worker pool, and a janitor that deletes old uploads/results.
+never to a system path.  The only heavy work happens in the background job thread.
 """
 
 from __future__ import annotations
 
 import logging
 import re
-import uuid
-from collections import Counter
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
+from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -32,12 +29,24 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api import __version__
+
 from api.jobs import runner
 from api.jobs.store import QueueFull
-from api.pipeline import PIPELINE_VERSION, chat, config, llm, models, portfolio
+from api.pipeline import (
+    PIPELINE_VERSION,
+    chat,
+    config,
+    llm,
+    models,
+    portfolio,
+    ingest,
+    research_profile,
+    research_differentiator,
+    business_intelligence,
+    billing,
+)
 
 logger = logging.getLogger("thesistrace.api")
-
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
 _CORS_ORIGINS = [
     "http://localhost:5173",
@@ -50,7 +59,6 @@ _STATUS_CODES = {
     404: "NOT_FOUND",
     409: "NOT_READY",
     413: "FILE_TOO_LARGE",
-    503: "UNAVAILABLE",
     415: "UNSUPPORTED_FILE",
     422: "VALIDATION_ERROR",
 }
@@ -66,20 +74,15 @@ class ChatRequest(BaseModel):
     history: list[ChatTurn] = Field(default_factory=list, max_length=40)
 
 
-class PortfolioRequest(BaseModel):
-    job_ids: list[str] = Field(min_length=2, max_length=5)
-    name: str | None = Field(default=None, max_length=80)
+class CheckoutRequest(BaseModel):
+    plan_id: str = Field(min_length=1, max_length=50)
+    interval: Literal["month", "year"] = "month"
+    provider: Literal["stripe", "razorpay"] = "stripe"
 
 
-def _queue_full() -> HTTPException:
-    return HTTPException(
-        status_code=503,
-        detail={
-            "code": "QUEUE_FULL",
-            "message": "The analysis queue is full right now. Please try again in a minute.",
-        },
-        headers={"Retry-After": "30"},
-    )
+class PlanUpdateRequest(BaseModel):
+    plan_id: str = Field(min_length=1, max_length=50)
+    interval: Literal["month", "year"] = "month"
 
 
 def _error(code: str, message: str) -> dict:
@@ -101,20 +104,16 @@ def _safe_download_name(title: str) -> str:
 async def lifespan(_: FastAPI):
     config.ensure_dirs()
     logger.info(
-        "ThesisTrace API ready | data=%s | gemini=%s | low_ram=%s",
+        "Paper2Reality API ready | data=%s | gemini=%s | low_ram=%s",
         config.DATA_DIR,
         bool(config.GEMINI_API_KEY),
         config.LOW_RAM,
     )
-    runner.start()
-    try:
-        yield
-    finally:
-        runner.shutdown()
+    yield
 
 
 app = FastAPI(
-    title="ThesisTrace API",
+    title="Paper2Reality API",
     version=__version__,
     description="Research-to-commercialization intelligence: evidence-cited paper analysis.",
     lifespan=lifespan,
@@ -123,7 +122,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_CORS_ORIGINS,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -140,7 +139,7 @@ async def http_exception_handler(_: Request, exc: StarletteHTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content=_error(code, message),
-        headers=getattr(exc, "headers", None),
+        headers=exc.headers,
     )
 
 
@@ -167,7 +166,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 @app.get("/")
 async def root():
     return {
-        "name": "ThesisTrace",
+        "name": "Paper2Reality",
         "version": __version__,
         "health": "/api/health",
         "docs": "/docs",
@@ -183,8 +182,8 @@ async def health():
         "models_loaded": models.loaded_models(),
         "dependencies": status["dependencies"],
         "mode": config.public_config(),
-        "queue": runner.queue_stats(),
         "pipeline_version": PIPELINE_VERSION,
+        "queue": runner.queue_stats(),
     }
 
 
@@ -217,11 +216,7 @@ async def create_job(file: UploadFile = File(...)):
             },
         )
 
-    # Fail fast, before writing a (possibly 30 MB) upload we could not process anyway.
-    if not runner.has_capacity():
-        raise _queue_full()
-
-    job_id = uuid.uuid4().hex
+    job_id = uuid4().hex
     config.ensure_dirs()
     destination = config.UPLOAD_DIR / f"{job_id}{suffix}"
     size = 0
@@ -231,16 +226,6 @@ async def create_job(file: UploadFile = File(...)):
                 chunk = await file.read(1024 * 1024)
                 if not chunk:
                     break
-                if size == 0 and suffix == ".pdf" and b"%PDF" not in chunk[:1024]:
-                    handle.close()
-                    destination.unlink(missing_ok=True)
-                    raise HTTPException(
-                        status_code=415,
-                        detail={
-                            "code": "UNSUPPORTED_FILE",
-                            "message": "That file is named .pdf but is not a PDF document.",
-                        },
-                    )
                 size += len(chunk)
                 if size > config.MAX_UPLOAD_BYTES:
                     handle.close()
@@ -271,33 +256,39 @@ async def create_job(file: UploadFile = File(...)):
             status_code=400,
             detail={"code": "EMPTY_FILE", "message": "The uploaded file is empty."},
         )
+    if suffix == ".pdf":
+        with destination.open("rb") as handle:
+            if handle.read(5) != b"%PDF-":
+                destination.unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=415,
+                    detail={
+                        "code": "INVALID_PDF",
+                        "message": "The uploaded file is not a valid PDF.",
+                    },
+                )
 
     try:
         job = runner.create_job(destination, name, job_id=job_id)
-    except QueueFull:
+    except QueueFull as exc:
         destination.unlink(missing_ok=True)
-        raise _queue_full() from None
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "QUEUE_FULL",
+                "message": str(exc),
+            },
+            headers={"Retry-After": "30"},
+        ) from exc
+
     return JSONResponse(
         status_code=202,
-        content={"job_id": job["job_id"], "status": job["status"], "filename": name},
+        content={
+            "job_id": job["job_id"],
+            "status": job["status"],
+            "filename": name,
+        },
     )
-
-
-@app.delete("/api/jobs/{job_id}")
-async def delete_job(job_id: str):
-    """Delete an analysis and its uploaded file (privacy: users can remove their data)."""
-    outcome = runner.delete_job(job_id)
-    if outcome == "missing":
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
-        )
-    if outcome == "active":
-        raise HTTPException(
-            status_code=409,
-            detail={"code": "JOB_ACTIVE", "message": "The analysis is still running; try again when it finishes."},
-        )
-    return {"status": "deleted", "job_id": job_id}
 
 
 @app.get("/api/jobs/{job_id}")
@@ -310,6 +301,23 @@ async def job_status(job_id: str):
         )
     return job
 
+@app.delete("/api/jobs/{job_id}")
+async def delete_job(job_id: str):
+    result = runner.delete_job(job_id)
+
+    if result == "missing":
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+
+    if result == "active":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_ACTIVE", "message": "A running job cannot be deleted."},
+        )
+
+    return {"job_id": job_id, "status": "deleted"}
 
 @app.get("/api/jobs/{job_id}/report")
 async def job_report(job_id: str, format: str = "md"):
@@ -351,134 +359,10 @@ async def job_report(job_id: str, format: str = "md"):
     )
 
 
-@app.get("/api/jobs/{job_id}/audit")
-async def job_audit(job_id: str):
-    """Machine-readable Trust Ledger: the receipt behind every verdict."""
-    job = runner.get_job(job_id)
-    if not job:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
-        )
-    if job["status"] == "error":
-        message = (job.get("error") or {}).get("message", "The analysis failed.")
-        raise HTTPException(status_code=409, detail={"code": "JOB_FAILED", "message": message})
-    if job["status"] != "done":
-        raise HTTPException(
-            status_code=409,
-            detail={"code": "JOB_NOT_READY", "message": "The analysis is still running."},
-        )
-
-    claims = job.get("claims") or []
-    methods = Counter(
-        (claim.get("audit") or {}).get("method") or claim.get("source") or "unknown"
-        for claim in claims
-    )
-    doc = job.get("doc") or {}
-    return {
-        "job_id": job_id,
-        "status": "done",
-        "generated_at": job.get("updated_at") or job.get("created_at"),
-        "pipeline_version": job.get("pipeline_version") or PIPELINE_VERSION,
-        "doc": {
-            "filename": doc.get("filename"),
-            "title": doc.get("title"),
-            "pages": doc.get("pages"),
-        },
-        "summary": {
-            "claims": len(claims),
-            "supported": sum(1 for claim in claims if claim.get("verdict") == "supported"),
-            "partial": sum(
-                1 for claim in claims if claim.get("verdict") == "partially_supported"
-            ),
-            "insufficient": sum(
-                1 for claim in claims if claim.get("verdict") == "insufficient"
-            ),
-            "methods": dict(methods),
-        },
-        "claims": [
-            {
-                "id": claim.get("id"),
-                "text": claim.get("text"),
-                "page": claim.get("page"),
-                "verdict": claim.get("verdict"),
-                "confidence": claim.get("confidence"),
-                "source": claim.get("source"),
-                "audit": claim.get("audit"),
-            }
-            for claim in claims
-        ],
-    }
-
-
-@app.post("/api/portfolios", status_code=201)
-def create_portfolio(body: PortfolioRequest):
-    """Compare 2-5 finished analyses: readiness table + disagreement ledger."""
-    analyses: list[dict] = []
-    missing: list[str] = []
-    seen: set[str] = set()
-    for job_id in body.job_ids:
-        if job_id in seen:
-            continue
-        seen.add(job_id)
-        job = runner.get_job(job_id)
-        if not job:
-            missing.append(job_id)
-            continue
-        if job.get("status") != "done":
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "JOB_NOT_READY",
-                    "message": "Every paper in a portfolio must finish analysing first.",
-                },
-            )
-        analyses.append(job)
-
-    if missing:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "code": "JOB_NOT_FOUND",
-                "message": "One of those analyses does not exist.",
-            },
-        )
-    if len(analyses) < 2:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "PORTFOLIO_TOO_SMALL",
-                "message": "Pick at least two different analyses.",
-            },
-        )
-
-    try:
-        return portfolio.create(analyses, name=body.name)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": "PORTFOLIO_INVALID", "message": str(exc)},
-        ) from exc
-
-
-@app.get("/api/portfolios/{portfolio_id}")
-async def get_portfolio(portfolio_id: str):
-    result = portfolio.load(portfolio_id)
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "PORTFOLIO_NOT_FOUND", "message": "That portfolio does not exist."},
-        )
-    return result
-
 
 @app.post("/api/jobs/{job_id}/chat")
 def job_chat(job_id: str, body: ChatRequest):
-    """Answer a question about the uploaded paper using Gemini over retrieved passages.
-
-    Declared ``def`` (not ``async def``) so the blocking Gemini call runs in FastAPI's
-    thread pool and never stalls the event loop.
-    """
+    """Answer questions using paper passages and stored pipeline findings."""
     if not llm.enabled():
         raise HTTPException(
             status_code=503,
@@ -491,19 +375,23 @@ def job_chat(job_id: str, body: ChatRequest):
             status_code=404,
             detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
         )
+
     if job["status"] == "error":
         message = (job.get("error") or {}).get("message", "The analysis failed.")
-        raise HTTPException(status_code=409, detail={"code": "JOB_FAILED", "message": message})
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_FAILED", "message": message},
+        )
+
     if job["status"] != "done":
         raise HTTPException(
             status_code=409,
             detail={"code": "JOB_NOT_READY", "message": "The analysis is still running."},
         )
 
-    # The upload may already be deleted by the retention policy; the stored analysis
-    # (the pipeline findings) can still ground the answer.
     source = runner.get_source(job_id)
-    path, filename = source if source else (None, job.get("filename") or "paper")
+    path, filename = source if source else (None, job.get("filename", "paper"))
+
     try:
         return chat.answer(
             job_id,
@@ -518,3 +406,235 @@ def job_chat(job_id: str, body: ChatRequest):
             status_code=exc.status,
             detail={"code": exc.code, "message": exc.message},
         ) from exc
+
+
+
+
+@app.post("/api/jobs/{job_id}/differentiate")
+def job_differentiate(job_id: str, limit: int = 8):
+    """Compare the uploaded paper with related academic literature."""
+
+    if not llm.enabled():
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "DIFFERENTIATOR_DISABLED",
+                "message": "Configure GEMINI_API_KEY to use research differentiation.",
+            },
+        )
+
+    if not 1 <= limit <= 20:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_LIMIT",
+                "message": "The paper search limit must be between 1 and 20.",
+            },
+        )
+
+    job = runner.get_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+
+    if job["status"] == "error":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_FAILED", "message": "The original paper analysis failed."},
+        )
+
+    source = runner.get_source(job_id)
+    if not source:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "Wait for the original analysis to finish."},
+        )
+
+    path, filename = source
+
+    try:
+        document = ingest.ingest_file(path, filename)
+        extracted = research_profile.extract_research_profile(
+            document,
+            use_llm=True,
+        )
+
+        comparison = research_differentiator.run_research_differentiator(
+            extracted["profile"],
+            limit=limit,
+            use_llm=True,
+        )
+
+        return {
+            "job_id": job_id,
+            "filename": filename,
+            "research_profile": extracted,
+            "differentiation": comparison,
+            "search_query": comparison.get("search_query", ""),
+            "related_papers": comparison.get("related_papers", []),
+            "comparison": comparison.get("comparison", {}),
+            "warnings": extracted.get("warnings", []) + comparison.get("warnings", []),
+        }
+
+    except Exception as exc:
+        logger.exception("Research differentiation failed for job %s", job_id)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "DIFFERENTIATION_FAILED",
+                "message": f"Research differentiation failed ({exc.__class__.__name__}). Check API logs.",
+            },
+        ) from exc
+
+
+@app.post("/api/jobs/{job_id}/business-intelligence")
+def job_business_intelligence(job_id: str):
+    """Evaluate how the research could translate into real-world industry applications and commercial opportunities."""
+
+    if not llm.enabled():
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "BUSINESS_INTELLIGENCE_DISABLED",
+                "message": "Configure GEMINI_API_KEY to use business intelligence.",
+            },
+        )
+
+    job = runner.get_job(job_id)
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "JOB_NOT_FOUND", "message": "That analysis job does not exist."},
+        )
+
+    if job["status"] == "error":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_FAILED", "message": "The original paper analysis failed."},
+        )
+
+    if job["status"] != "done":
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "Wait for the original analysis to finish."},
+        )
+
+    source = runner.get_source(job_id)
+    if not source:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "JOB_NOT_READY", "message": "Wait for the original analysis to finish."},
+        )
+
+    path, filename = source
+    if not path.exists():
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "SOURCE_UNAVAILABLE",
+                "message": "The uploaded paper file is no longer available.",
+            },
+        )
+
+    try:
+        document = ingest.ingest_file(path, filename)
+        extracted = research_profile.extract_research_profile(
+            document,
+            use_llm=True,
+        )
+
+        readiness_context = {
+            "trl": job.get("trl"),
+            "reproducibility": job.get("reproducibility"),
+            "claims_count": len(job.get("claims", [])),
+        }
+
+        bi_eval = business_intelligence.evaluate_business_intelligence(
+            extracted.get("profile", {}),
+            readiness_context=readiness_context,
+            use_llm=True,
+        )
+
+        bi_data = bi_eval.get("business_intelligence", {})
+        combined_warnings = extracted.get("warnings", []) + bi_eval.get("warnings", [])
+
+        return {
+            "job_id": job_id,
+            "filename": filename,
+            "research_profile": extracted,
+            "business_intelligence": bi_data,
+            "overall_assessment": bi_data.get("overall_assessment", ""),
+            "application_areas": bi_data.get("application_areas", []),
+            "target_industries": bi_data.get("target_industries", []),
+            "target_customers": bi_data.get("target_customers", []),
+            "product_opportunities": bi_data.get("product_opportunities", []),
+            "commercialization_pathways": bi_data.get("commercialization_pathways", []),
+            "business_models": bi_data.get("business_models", []),
+            "commercialization_barriers": bi_data.get("commercialization_barriers", []),
+            "validation_steps": bi_data.get("validation_steps", []),
+            "evidence_and_assumptions": bi_data.get("evidence_and_assumptions", []),
+            "warnings": combined_warnings,
+        }
+
+    except Exception as exc:
+        logger.exception("Business intelligence failed for job %s", job_id)
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "BUSINESS_INTELLIGENCE_FAILED",
+                "message": f"Business intelligence failed ({exc.__class__.__name__}). Check API logs.",
+            },
+        ) from exc
+
+
+# ---------------------------------------------------------------------------
+# SaaS Subscription & Billing Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/billing/plans")
+def get_billing_plans():
+    """Return public SaaS subscription tiers, pricing, features, and FAQs."""
+    return billing.get_plans()
+
+
+@app.get("/api/billing/subscription")
+def get_billing_subscription():
+    """Return user's active plan, usage counters, and feature entitlements."""
+    return billing.get_subscription()
+
+
+@app.post("/api/billing/checkout")
+def create_billing_checkout(body: CheckoutRequest):
+    """Initiate a checkout session or return a clear configuration guidance notice."""
+    return billing.create_checkout_session(
+        plan_id=body.plan_id,
+        interval=body.interval,
+        provider=body.provider,
+    )
+
+
+@app.post("/api/billing/plan")
+def update_billing_plan(body: PlanUpdateRequest):
+    """Change active subscription tier."""
+    try:
+        return billing.update_subscription_plan(body.plan_id, body.interval)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "INVALID_PLAN", "message": str(exc)},
+        ) from exc
+
+
+@app.post("/api/billing/cancel")
+def cancel_billing_subscription():
+    """Cancel subscription at end of current billing period."""
+    return billing.cancel_subscription()
+
+
+@app.post("/api/billing/webhook")
+async def billing_webhook(request: Request):
+    """Handle incoming webhook events from Stripe or Razorpay."""
+    payload = await request.body()
+    return {"status": "received", "bytes": len(payload)}

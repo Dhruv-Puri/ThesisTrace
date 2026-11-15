@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
 # repo root: api/pipeline/config.py -> api/pipeline -> api -> repo
 ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT / ".env")
 
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -50,10 +51,22 @@ def _env_number(name: str, default: float, minimum: float, cast=int):
 # ---------------------------------------------------------------------------
 LOW_RAM = _flag("LOW_RAM")                 # small models / gazetteer-only NER
 SEMANTIC = _flag("SEMANTIC")               # optional embedding rerank
+# Semantic retrieval
+EMBEDDING_MODEL = _env(
+    "EMBEDDING_MODEL",
+    "sentence-transformers/all-MiniLM-L6-v2",
+)
+
+SEMANTIC_WEIGHT = 0.6
+LEXICAL_WEIGHT = 0.4
+SEMANTIC_MIN_SIMILARITY = 0.35
+HYBRID_RETRIEVAL_FLOOR = 0.20
+HYBRID_SUPPORTED_RELEVANCE = 0.35
+HYBRID_PARTIAL_RELEVANCE = 0.20
+
 TOKENIZER_STUDY_ENABLED = _env_flag("TOKENIZER_STUDY", "1")
 LLM_CLAIMS_ENABLED = _env_flag("LLM_CLAIMS", "1")
 LLM_REPORT_ENABLED = _env_flag("LLM_REPORT", "0")
-
 # Gemini is optional.  With no key the whole app still works locally.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
@@ -86,7 +99,7 @@ JOB_MAX_QUEUE = _env_number("JOB_MAX_QUEUE", 20, 1)            # queued + runnin
 JOB_MAX_ATTEMPTS = _env_number("JOB_MAX_ATTEMPTS", 2, 1)       # only for crashed workers
 JOB_LEASE_SECONDS = _env_number("JOB_LEASE_SECONDS", 90.0, 5.0, float)
 JOB_TIMEOUT_SECONDS = _env_number("JOB_TIMEOUT_SECONDS", 900.0, 10.0, float)
-UPLOAD_TTL_SECONDS = _env_number("UPLOAD_TTL_SECONDS", 3600, 0)      # delete the file after this
+UPLOAD_TTL_SECONDS = _env_number("UPLOAD_TTL_SECONDS", 86400, 0)      # delete the file after this
 RESULT_TTL_SECONDS = _env_number("RESULT_TTL_SECONDS", 86400, 60)    # delete the whole job after this
 CLEANUP_INTERVAL_SECONDS = _env_number("CLEANUP_INTERVAL_SECONDS", 300.0, 1.0, float)
 JOB_MAX_STORED = _env_number("JOB_MAX_STORED", 200, 1)         # cap on finished jobs kept
@@ -148,6 +161,7 @@ def public_config() -> dict:
         "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else None,
         "low_ram": LOW_RAM,
         "semantic": SEMANTIC,
+
         "max_upload_mb": MAX_UPLOAD_MB,
         "tokenizer_study": TOKENIZER_STUDY_ENABLED,
         "retention": {

@@ -4,10 +4,18 @@ import { getConfig, getJob, uploadPaper } from "./api.js";
 import { Icon } from "./components/ui.jsx";
 import PortfolioScreen from "./components/PortfolioScreen.jsx";
 import ChatSheet, { useChat } from "./tabs/ChatSheet.jsx";
+import BusinessIntelligenceTab from "./tabs/BusinessIntelligenceTab.jsx";
 import ClaimsTab from "./tabs/ClaimsTab.jsx";
 import ReadinessTab from "./tabs/ReadinessTab.jsx";
 import ReportTab from "./tabs/ReportTab.jsx";
+import ResearchDifferentiatorTab from "./tabs/ResearchDifferentiatorTab.jsx";
+import ResearchGapsTab from "./tabs/ResearchGapsTab.jsx";
+import HowToUseModal from "./components/HowToUseModal.jsx";
+import PricingModal from "./components/PricingModal.jsx";
+import SettingsModal from "./components/SettingsModal.jsx";
 import SummaryTab from "./tabs/SummaryTab.jsx";
+import { applyTheme, readStoredTheme } from "./theme.js";
+
 
 const MAX_MB = 30;
 const ALLOWED = ["pdf", "txt", "md"];
@@ -18,6 +26,9 @@ const TABS = [
   { id: "summary", label: "Summary" },
   { id: "claims", label: "Claims" },
   { id: "readiness", label: "Readiness" },
+  { id: "gaps", label: "Research Gaps" },
+  { id: "differentiator", label: "Research Differentiator" },
+  { id: "business", label: "Business Intelligence" },
   { id: "report", label: "Report" },
 ];
 
@@ -102,31 +113,91 @@ function Dropzone({ onFile, busy }) {
   );
 }
 
-function StartScreen({ onFile, onDemo, busy }) {
+function StartScreen({ onFile, onDemo, onOpenGuide, onOpenPricing, onOpenSettings, busy }) {
   return (
     <main className="start">
       <header className="brand">
-        <span className="brand-mark" aria-hidden="true">T</span>
-        ThesisTrace
+        <div className="brand-title">
+          <span className="brand-mark" aria-hidden="true">T</span>
+          ThesisTrace
+        </div>
+        <div className="brand-actions">
+          <button
+            type="button"
+            className="button quiet bubbly-nav-btn"
+            onClick={onOpenPricing}
+            title="SaaS Plans & Pricing"
+          >
+            <Icon name="pricing" size={15} /> Pricing
+          </button>
+          <button
+            type="button"
+            className="button quiet bubbly-nav-btn"
+            onClick={onOpenSettings}
+            title="Theme & Subscription Settings"
+          >
+            <Icon name="settings" size={15} /> Settings
+          </button>
+        </div>
       </header>
 
       <section className="start-main">
-        <p className="eyebrow">Research readiness</p>
+        <div className="bubbly-badge-pill">✨ Research-to-Product Intelligence</div>
         <h1>Should this paper<br />become a product?</h1>
         <p className="lede">
           Upload a paper. See which claims its own evidence supports, whether it can be
-          rebuilt, and how close it is to real-world use.
+          rebuilt, how it compares to academic literature, and what it takes to commercialize.
         </p>
         <p className="start-audience">
           For thesis writers, lab leads and technology-transfer teams.
         </p>
         <Dropzone onFile={onFile} busy={busy} />
-        <button type="button" className="text-button sample-link" onClick={onDemo}>
-          See a sample analysis <Icon name="arrow" size={14} />
-        </button>
+        <div className="start-action-row">
+          <button type="button" className="text-button sample-link" onClick={onDemo}>
+            See a sample analysis <Icon name="arrow" size={14} />
+          </button>
+          <button
+            type="button"
+            className="button quiet bubbly-guide-pill-btn"
+            onClick={onOpenGuide}
+          >
+            <Icon name="lightbulb" size={15} /> How to use ThesisTrace
+          </button>
+        </div>
+
+        <div className="bubbly-feature-preview">
+          <button type="button" className="preview-chip" onClick={onOpenGuide}>
+            <span className="chip-emoji">⚖️</span>
+            <span className="chip-text">
+              <strong>Audit Claims</strong>
+              <small>Evidence receipts</small>
+            </span>
+          </button>
+          <button type="button" className="preview-chip" onClick={onOpenGuide}>
+            <span className="chip-emoji">🚀</span>
+            <span className="chip-text">
+              <strong>TRL & Readiness</strong>
+              <small>TRL 1–9 & 12-pt checklist</small>
+            </span>
+          </button>
+          <button type="button" className="preview-chip" onClick={onOpenGuide}>
+            <span className="chip-emoji">🧭</span>
+            <span className="chip-text">
+              <strong>Differentiator</strong>
+              <small>OpenAlex literature comparison</small>
+            </span>
+          </button>
+          <button type="button" className="preview-chip" onClick={onOpenGuide}>
+            <span className="chip-emoji">💡</span>
+            <span className="chip-text">
+              <strong>Commercial BI</strong>
+              <small>Products, models & barriers</small>
+            </span>
+          </button>
+        </div>
       </section>
 
-      <footer className="start-foot">Runs locally. No API key required.</footer>
+      <footer className="start-foot">Runs locally. No API key required for core analysis.</footer>
     </main>
   );
 }
@@ -171,7 +242,7 @@ function ErrorScreen({ message, onReset }) {
   );
 }
 
-function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onCompare, onReset }) {
+function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onCompare, onReset, onOpenGuide, onOpenPricing, onOpenSettings }) {
   const claims = analysis.claims || [];
   const supported = claims.filter((claim) => claim.verdict === "supported").length;
   const trl = analysis.trl?.level ?? "—";
@@ -194,6 +265,30 @@ function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onC
         ) : null}
       </div>
       <div className="head-actions">
+        <button
+          type="button"
+          className="button quiet bubbly-guide-pill-btn"
+          onClick={onOpenGuide}
+          title="Feature guide: how to use each tab"
+        >
+          <Icon name="lightbulb" size={15} /> How to use
+        </button>
+        <button
+          type="button"
+          className="button quiet"
+          onClick={onOpenPricing}
+          title="SaaS Plans & Pricing"
+        >
+          <Icon name="pricing" size={15} /> Pricing
+        </button>
+        <button
+          type="button"
+          className="button quiet"
+          onClick={onOpenSettings}
+          title="Theme & Subscription Settings"
+        >
+          <Icon name="settings" size={15} /> Settings
+        </button>
         {canCompare ? (
           <button type="button" className="button quiet" onClick={onCompare}>
             <Icon name="portfolio" size={15} /> Compare
@@ -214,7 +309,7 @@ function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onC
   );
 }
 
-function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onChat, onCompare, onReset }) {
+function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onChat, onCompare, onReset, onOpenGuide, onOpenPricing, onOpenSettings }) {
   return (
     <main className="analysis">
       <AnalysisHeader
@@ -225,6 +320,9 @@ function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onCh
         onChat={onChat}
         onCompare={onCompare}
         onReset={onReset}
+        onOpenGuide={onOpenGuide}
+        onOpenPricing={onOpenPricing}
+        onOpenSettings={onOpenSettings}
       />
 
       <nav className="tabs" role="tablist" aria-label="Analysis sections">
@@ -246,6 +344,13 @@ function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onCh
         {tab === "summary" ? <SummaryTab analysis={analysis} /> : null}
         {tab === "claims" ? <ClaimsTab analysis={analysis} /> : null}
         {tab === "readiness" ? <ReadinessTab analysis={analysis} /> : null}
+        {tab === "gaps" ? <ResearchGapsTab analysis={analysis} /> : null}
+        {tab === "differentiator" ? (
+          <ResearchDifferentiatorTab analysis={analysis} isDemo={isDemo} />
+        ) : null}
+        {tab === "business" ? (
+          <BusinessIntelligenceTab analysis={analysis} isDemo={isDemo} />
+        ) : null}
         {tab === "report" ? <ReportTab analysis={analysis} /> : null}
       </section>
 
@@ -359,55 +464,95 @@ export default function App() {
     setChatOpen(false);
   }
 
+  const [theme, setTheme] = useState(readStoredTheme);
+  const [pricingOpen, setPricingOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
+
   const isDemo = !analysis?.job_id || String(analysis.job_id).startsWith("demo");
   const canCompare = Boolean(analysis) && (isDemo || saved.length >= 2);
   const chatEnabled = Boolean(analysis) && !isDemo && config?.gemini_enabled !== false;
 
-  if (phase === "start") {
-    return <StartScreen onFile={startUpload} onDemo={() => {
-      setAnalysis(MOCK_ANALYSIS);
-      setJob(null);
-      setJobId(null);
-      setTab("summary");
-      setPhase("done");
-    }} busy={false} />;
-  }
-
-  if (phase === "working") {
-    return <ProgressScreen job={job} uploading={!jobId} />;
-  }
-
-  if (phase === "error") {
-    return <ErrorScreen message={error} onReset={reset} />;
-  }
-
-  if (phase === "portfolio") {
-    return <PortfolioScreen saved={saved} demo={isDemo} onBack={() => setPhase("done")} />;
-  }
-
-  if (!analysis) {
-    return <StartScreen onFile={startUpload} onDemo={reset} busy={false} />;
-  }
-
   return (
     <>
-      <Analysis
-        analysis={analysis}
-        tab={tab}
-        setTab={setTab}
-        isDemo={isDemo}
-        canCompare={canCompare}
-        chatEnabled={chatEnabled}
-        onChat={() => setChatOpen(true)}
-        onCompare={() => setPhase("portfolio")}
-        onReset={reset}
+      {phase === "start" ? (
+        <StartScreen
+          onFile={startUpload}
+          onDemo={() => {
+            setAnalysis(MOCK_ANALYSIS);
+            setJob(null);
+            setJobId(null);
+            setTab("summary");
+            setPhase("done");
+          }}
+          onOpenGuide={() => setGuideOpen(true)}
+          onOpenPricing={() => setPricingOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          busy={false}
+        />
+      ) : phase === "working" ? (
+        <ProgressScreen job={job} uploading={!jobId} />
+      ) : phase === "error" ? (
+        <ErrorScreen message={error} onReset={reset} />
+      ) : phase === "portfolio" ? (
+        <PortfolioScreen saved={saved} demo={isDemo} onBack={() => setPhase("done")} />
+      ) : !analysis ? (
+        <StartScreen
+          onFile={startUpload}
+          onDemo={reset}
+          onOpenGuide={() => setGuideOpen(true)}
+          onOpenPricing={() => setPricingOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          busy={false}
+        />
+      ) : (
+        <>
+          <Analysis
+            analysis={analysis}
+            tab={tab}
+            setTab={setTab}
+            isDemo={isDemo}
+            canCompare={canCompare}
+            chatEnabled={chatEnabled}
+            onChat={() => setChatOpen(true)}
+            onCompare={() => setPhase("portfolio")}
+            onReset={reset}
+            onOpenGuide={() => setGuideOpen(true)}
+            onOpenPricing={() => setPricingOpen(true)}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
+          <ChatSheet
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+            analysis={analysis}
+            geminiEnabled={config?.gemini_enabled}
+            chat={chat}
+          />
+        </>
+      )}
+
+      <HowToUseModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+      <PricingModal
+        open={pricingOpen}
+        onClose={() => setPricingOpen(false)}
+        onOpenSettings={() => {
+          setPricingOpen(false);
+          setSettingsOpen(true);
+        }}
       />
-      <ChatSheet
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        analysis={analysis}
-        geminiEnabled={config?.gemini_enabled}
-        chat={chat}
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        theme={theme}
+        onThemeChange={setTheme}
+        onOpenPricing={() => {
+          setSettingsOpen(false);
+          setPricingOpen(true);
+        }}
       />
     </>
   );

@@ -22,6 +22,8 @@ _PIPELINES: dict[str, Any] = {}
 _LOADED: dict[str, str] = {}
 _ERRORS: dict[str, str] = {}
 _LOCK = threading.Lock()
+_EMBEDDERS: dict[str, tuple[Any, Any]] = {}
+_EMBEDDING_LOCK = threading.Lock()
 
 _TASK_LABEL = {
     "token-classification": "ner",
@@ -60,6 +62,43 @@ def get_pipeline(task: str, model: str | None):
         _PIPELINES[key] = pipe
         _LOADED[_TASK_LABEL.get(task, task)] = model
     return pipe
+def get_embedder(model: str | None = None):
+    """Return a cached tokenizer and encoder for semantic embeddings."""
+    model = model or config.EMBEDDING_MODEL
+
+    if not model:
+        return None
+
+    key = _key("embedding", model)
+
+    with _EMBEDDING_LOCK:
+        if key in _EMBEDDERS:
+            return _EMBEDDERS[key]
+
+        with _LOCK:
+            if key in _ERRORS:
+                return None
+
+        try:
+            from transformers import AutoModel, AutoTokenizer
+
+            tokenizer = AutoTokenizer.from_pretrained(model)
+            encoder = AutoModel.from_pretrained(model)
+            encoder.eval()
+
+        except Exception as exc:
+            with _LOCK:
+                _ERRORS[key] = clip(
+                    f"{exc.__class__.__name__}: {exc}", 300
+                )
+            return None
+
+        with _LOCK:
+            _LOADED["semantic"] = model
+
+        _EMBEDDERS[key] = (tokenizer, encoder)
+        return _EMBEDDERS[key]
+
 
 
 def loaded_models() -> list[str]:
