@@ -4,7 +4,7 @@ CSR322_2026-10-06.pdf
 .venv/
 venv/
 .env
-
+.vscode/
 # Project-local runtime data (uploads, job output). Safe to delete.
 .data/
 api/tests/.tmp/
@@ -24,3 +24,4 @@ client/*.local
 /screenshots/
 ThesisTrace_Pitch_Deck.pptx
 .cloud-attachments/
+global-packages-before-cleanup.txt
