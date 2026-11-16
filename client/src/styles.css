@@ -203,7 +203,7 @@ a { color: var(--accent-dark); }
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .dropzone:hover,
-.dropzone.is-dragging { border-color: var(--accent); background: #ffffff; }
+.dropzone.is-dragging { border-color: var(--accent); background: var(--accent-soft); }
 .dropzone.is-busy { opacity: 0.6; cursor: progress; }
 
 .drop-icon {
@@ -417,7 +417,7 @@ a { color: var(--accent-dark); }
   padding: 5px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--sheet);
   font-size: 12px;
 }
 .chip-type {
@@ -444,7 +444,7 @@ a { color: var(--accent-dark); }
   gap: 2px;
   padding: 3px;
   border-radius: 8px;
-  background: #eceae0;
+  background: var(--line);
 }
 .segmented button {
   display: inline-flex;
@@ -457,11 +457,11 @@ a { color: var(--accent-dark); }
   font-size: 12px;
 }
 .segmented button span { color: var(--faint); font-variant-numeric: tabular-nums; }
-.segmented button.is-active { background: #ffffff; color: var(--ink); box-shadow: 0 1px 2px rgba(32, 42, 51, 0.08); }
+.segmented button.is-active { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 2px rgba(32, 42, 51, 0.08); }
 
 .claim { padding: 20px 0; border-top: 1px solid var(--line); transition: background 150ms ease; }
 .claim:first-child { border-top: 0; }
-.claim:hover { background: rgba(255, 255, 255, 0.35); }
+.claim:hover { background: var(--accent-soft); }
 
 .claim-line {
   display: grid;
@@ -487,7 +487,7 @@ a { color: var(--accent-dark); }
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fbfaf4;
+  background: var(--paper);
 }
 
 .receipt-grid {
@@ -3752,4 +3752,60 @@ html[data-style="bubbly"] .pricing-plan-card.is-recommended { transform: transla
   html[data-style="bubbly"] .theme-card-choice:hover,
   html[data-style="bubbly"] .accent-choice-pill:hover,
   html[data-style="bubbly"] .pricing-plan-card.is-recommended { transform: none; }
+}
+
+
+/* -- Simple UI Polish: Header Status Pills & Tab Count Badges ------------ */
+
+.verdict-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.header-pill.pill-green {
+  background: rgba(31, 107, 79, 0.14);
+  color: var(--green);
+}
+
+.header-pill.pill-accent {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.header-pill.pill-gold {
+  background: rgba(138, 98, 18, 0.14);
+  color: var(--gold);
+}
+
+.tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-count-badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.bubbly-helper-banner.is-collapsed .bubbly-helper-toggle {
+  padding: 8px 14px;
 }
