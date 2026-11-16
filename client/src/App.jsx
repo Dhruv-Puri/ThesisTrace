@@ -255,11 +255,17 @@ function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onC
           {isDemo ? "Sample analysis" : "Analysis"} · {analysis.doc?.pages || 0} pages
         </p>
         <h1>{analysis.doc?.title || "Untitled paper"}</h1>
-        <p className="verdict-line">
-          {supported} of {claims.length} claims supported
-          <span aria-hidden="true"> · </span>TRL {trl}/9
-          <span aria-hidden="true"> · </span>reproducibility {repro}/100
-        </p>
+        <div className="verdict-line verdict-pills-row">
+          <span className="header-pill pill-green">
+            ✓ {supported}/{claims.length} claims supported
+          </span>
+          <span className="header-pill pill-accent">
+            TRL {trl}/9
+          </span>
+          <span className="header-pill pill-gold">
+            Reproducibility {repro}/100
+          </span>
+        </div>
         {!chatEnabled && !isDemo ? (
           <p className="head-note">Ask needs a Gemini key; everything else runs locally.</p>
         ) : null}
@@ -310,6 +316,17 @@ function AnalysisHeader({ analysis, isDemo, canCompare, chatEnabled, onChat, onC
 }
 
 function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onChat, onCompare, onReset, onOpenGuide, onOpenPricing, onOpenSettings }) {
+  const claimsCount = analysis.claims?.length || 0;
+  const trl = analysis.trl?.level ?? null;
+  const gapsCount = analysis.research_gaps?.gaps?.length || analysis.reproducibility?.gaps?.length || 0;
+
+  function tabBadge(id) {
+    if (id === "claims" && claimsCount) return String(claimsCount);
+    if (id === "readiness" && trl != null) return `TRL ${trl}`;
+    if (id === "gaps" && gapsCount) return String(gapsCount);
+    return null;
+  }
+
   return (
     <main className="analysis">
       <AnalysisHeader
@@ -326,18 +343,22 @@ function Analysis({ analysis, tab, setTab, isDemo, canCompare, chatEnabled, onCh
       />
 
       <nav className="tabs" role="tablist" aria-label="Analysis sections">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.id}
-            className={tab === item.id ? "is-active" : ""}
-            onClick={() => setTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
+        {TABS.map((item) => {
+          const badge = tabBadge(item.id);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              className={tab === item.id ? "is-active" : ""}
+              onClick={() => setTab(item.id)}
+            >
+              <span>{item.label}</span>
+              {badge ? <span className="tab-count-badge">{badge}</span> : null}
+            </button>
+          );
+        })}
       </nav>
 
       <section className="panel-area">
